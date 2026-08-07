@@ -18,6 +18,7 @@ import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordSt
 import { usePasswordReset } from "@/hooks/usePasswordReset";
 import { createBrowserClient } from "@/lib/supabase";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { BRAND_NAME } from "@/constants";
 
 function ResetPasswordPageContent() {
   const router = useRouter();
@@ -224,7 +225,7 @@ function ResetPasswordPageContent() {
       </AnimatePresence>
 
       <AuthFooter>
-        © {new Date().getFullYear()} Northstar Bank — All rights reserved.
+        © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
       </AuthFooter>
     </AuthCard>
   );

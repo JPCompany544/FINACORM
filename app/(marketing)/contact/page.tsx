@@ -21,7 +21,7 @@ export default function ContactPage() {
             </div>
             <h3 className="text-xl font-bold">Dedicated Concierge Service</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Reach us anytime via email, secure chat in the mobile dashboard, or phone at 1-800-NORTHSTAR. Our customer operations are operating round-the-clock to keep your assets secure.
+              Reach us anytime via email, secure chat in the mobile dashboard, or phone at 1-800-FINACORM. Our customer operations are operating round-the-clock to keep your assets secure.
             </p>
           </CardContent>
         </Card>

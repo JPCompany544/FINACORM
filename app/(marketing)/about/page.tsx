@@ -3,13 +3,14 @@ import { Section } from "@/components/layout/section";
 import { SectionHeading } from "@/components/layout/section-heading";
 import { Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BRAND_NAME } from "@/constants";
 
 export default function AboutPage() {
   return (
     <Section size="md">
       <Container>
         <SectionHeading
-          title="About Northstar Bank"
+          title={`About ${BRAND_NAME}`}
           subtitle="Learn about our mission to build a premium, secure, digital-first banking platform."
           badgeText="Our Mission"
           badgeVariant="premium"
@@ -21,7 +22,7 @@ export default function AboutPage() {
             </div>
             <h3 className="text-xl font-bold">Pioneering Digital Banking</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Founded in 2026, Northstar Bank leverages cutting-edge technology to deliver secure, fast, and modern financial services. From personal deposits to investment portfolios, we guide your financial journey with precision.
+              Founded in 2026, {BRAND_NAME} leverages cutting-edge technology to deliver secure, fast, and modern financial services. From personal deposits to investment portfolios, we guide your financial journey with precision.
             </p>
           </CardContent>
         </Card>

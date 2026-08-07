@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/container";
+import { BRAND_NAME } from "@/constants";
 
 export const CallToAction: React.FC = () => {
   return (
@@ -106,7 +107,7 @@ export const CallToAction: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.25, ease: "easeOut" as const }}
               className="text-body-large text-white/70 leading-relaxed max-w-xl"
             >
-              Open your Northstar Bank account today and take control of your financial future with secure, modern banking.
+              Open your {BRAND_NAME} account today and take control of your financial future with secure, modern banking.
             </motion.p>
 
             {/* CTA Buttons */}

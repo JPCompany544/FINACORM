@@ -42,7 +42,7 @@ export interface CardItem {
 export const MOCK_CARDS: CardItem[] = [
   {
     id: "card-debit-metal",
-    name: "Northstar Metal Debit",
+    name: "FINACORM Metal Debit",
     number: "•••• •••• •••• 4821",
     type: "metal",
     brand: "Visa",

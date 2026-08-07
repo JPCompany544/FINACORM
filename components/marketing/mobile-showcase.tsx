@@ -5,6 +5,7 @@ import { CheckCircle2, ArrowUpRight, ArrowDownLeft, ScanFace, Bell, Zap, Buildin
 import { motion } from "framer-motion";
 import { Container } from "@/components/layout/container";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/constants";
 
 // Inline SVGs for store buttons
 const AppleLogo = () => (
@@ -168,7 +169,7 @@ export const MobileShowcase: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
                 className="text-body-large text-text-secondary leading-relaxed"
               >
-                Download the Northstar app to manage your entire financial life from anywhere. Designed for speed, security, and simplicity.
+                Download the {BRAND_NAME} app to manage your entire financial life from anywhere. Designed for speed, security, and simplicity.
               </motion.p>
             </div>
 

@@ -7,6 +7,7 @@ import { AuthBackground } from "./AuthBackground";
 import { AuthBrand } from "./AuthBrand";
 import { SecurityHighlights } from "./SecurityHighlights";
 import { AUTH_LEFT_PANEL_CONTENT } from "@/constants/auth";
+import { BRAND_NAME } from "@/constants";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -71,7 +72,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
           <AuthBrand />
           <div className="space-y-2 mt-2">
             <h2 className="text-heading-l font-extrabold tracking-tight text-foreground">
-              Welcome to Northstar Bank
+              Welcome to {BRAND_NAME}
             </h2>
             <p className="text-body-small text-text-secondary leading-relaxed font-medium">
               Secure, modern banking designed to help you manage your money with confidence from anywhere.

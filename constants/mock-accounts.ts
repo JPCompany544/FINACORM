@@ -28,10 +28,10 @@ export const MOCK_ACCOUNTS: AccountItem[] = [
     type: "Checking",
     lastActivity: "Withdrawal of $6.45 at Starbucks Coffee",
     routingNumber: "021000021",
-    iban: "US89 NSTR 0210 0002 1000 8421",
-    swift: "NSTRUS33XXX",
+    iban: "US89 FNCR 0210 0002 1000 8421",
+    swift: "FNCRUS33XXX",
     dateOpened: "Oct 12, 2024",
-    branch: "Northstar HQ - New York",
+    branch: "FINACORM HQ - New York",
     creditLimit: 5000.0
   },
   {
@@ -45,10 +45,10 @@ export const MOCK_ACCOUNTS: AccountItem[] = [
     type: "Savings",
     lastActivity: "Interest credit of $42.15 received",
     routingNumber: "021000021",
-    iban: "US89 NSTR 0210 0002 1000 9015",
-    swift: "NSTRUS33XXX",
+    iban: "US89 FNCR 0210 0002 1000 9015",
+    swift: "FNCRUS33XXX",
     dateOpened: "Nov 05, 2024",
-    branch: "Northstar HQ - New York"
+    branch: "FINACORM HQ - New York"
   },
   {
     id: "acc-brokerage",
@@ -61,10 +61,10 @@ export const MOCK_ACCOUNTS: AccountItem[] = [
     type: "Investments",
     lastActivity: "Dividend interest credit of $12.15",
     routingNumber: "021000021",
-    iban: "US89 NSTR 0210 0002 1000 3310",
-    swift: "NSTRUS33XXX",
+    iban: "US89 FNCR 0210 0002 1000 3310",
+    swift: "FNCRUS33XXX",
     dateOpened: "Jan 18, 2025",
-    branch: "Northstar HQ - New York"
+    branch: "FINACORM HQ - New York"
   }
 ];
 

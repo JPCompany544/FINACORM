@@ -25,7 +25,7 @@ const features = [
   {
     icon: BadgeCheck,
     title: "Trusted Institution",
-    description: "Thousands of customers trust Northstar Bank for safe and reliable digital banking.",
+    description: "Thousands of customers trust FINACORM Bank for safe and reliable digital banking.",
   },
 ];
 

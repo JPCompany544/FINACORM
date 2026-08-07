@@ -17,6 +17,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import type { StatementItem } from "@/constants/mock-statements";
 import { useToast } from "@/components/app-shell";
+import { BRAND_NAME } from "@/constants";
 
 interface StatementPreviewModalProps {
   statement: StatementItem | null;
@@ -105,7 +106,7 @@ export const StatementPreviewModal: React.FC<StatementPreviewModalProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-extrabold text-foreground">
-                    Northstar Bank
+                    {BRAND_NAME}
                   </h3>
                   <p className="text-[10px] font-semibold text-text-secondary">
                     Official Account Statement — Preview
@@ -132,7 +133,7 @@ export const StatementPreviewModal: React.FC<StatementPreviewModalProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-primary" />
                       <span className="text-xs font-black text-foreground tracking-tight">
-                        NORTHSTAR BANK
+                        {BRAND_NAME.toUpperCase()}
                       </span>
                     </div>
                     <p className="text-[9px] font-semibold text-text-secondary tracking-wide">
@@ -292,7 +293,7 @@ export const StatementPreviewModal: React.FC<StatementPreviewModalProps> = ({
 
               {/* Disclaimer */}
               <p className="text-[9px] font-semibold text-muted-foreground leading-relaxed border-t border-border/30 pt-4">
-                This is a mock preview generated for demonstration purposes only. The figures shown are simulated and do not constitute an official bank statement. Northstar Bank, N.A. is a registered banking institution regulated by the OCC.
+                This is a mock preview generated for demonstration purposes only. The figures shown are simulated and do not constitute an official bank statement. {BRAND_NAME}, N.A. is a registered banking institution regulated by the OCC.
               </p>
             </div>
 

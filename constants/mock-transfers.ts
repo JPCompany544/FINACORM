@@ -26,7 +26,7 @@ export const MOCK_TRANSFERS: TransferRecord[] = [
   {
     id: "tx-rec-1",
     receiptNumber: "REC-490382",
-    transactionId: "TXN-NS-90410",
+    transactionId: "TXN-FC-90410",
     type: "domestic",
     status: "success",
     date: "Aug 02, 2026",
@@ -45,7 +45,7 @@ export const MOCK_TRANSFERS: TransferRecord[] = [
   {
     id: "tx-rec-2",
     receiptNumber: "REC-294012",
-    transactionId: "TXN-NS-39401",
+    transactionId: "TXN-FC-39401",
     type: "internal",
     status: "success",
     date: "Jul 28, 2026",
@@ -55,7 +55,7 @@ export const MOCK_TRANSFERS: TransferRecord[] = [
     senderAccount: "•••• 8421",
     recipient: "High-Yield Savings Deposit",
     recipientAccount: "•••• 9015",
-    bankName: "Northstar Bank",
+    bankName: "FINACORM Bank",
     amount: 1200.00,
     fees: 0.00,
     reference: "Savings monthly allocation",
@@ -64,7 +64,7 @@ export const MOCK_TRANSFERS: TransferRecord[] = [
   {
     id: "tx-rec-3",
     receiptNumber: "REC-104928",
-    transactionId: "TXN-NS-10492",
+    transactionId: "TXN-FC-10492",
     type: "international",
     status: "success",
     date: "Jul 20, 2026",
@@ -86,7 +86,7 @@ export const MOCK_TRANSFERS: TransferRecord[] = [
   {
     id: "tx-rec-4",
     receiptNumber: "REC-084920",
-    transactionId: "TXN-NS-08492",
+    transactionId: "TXN-FC-08492",
     type: "domestic",
     status: "failed",
     date: "Jul 15, 2026",

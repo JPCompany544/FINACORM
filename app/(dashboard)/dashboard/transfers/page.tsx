@@ -76,10 +76,10 @@ export default function TransfersPage() {
           type: (acc.account_type === "CHECKING" ? "Checking" : acc.account_type) as "Checking" | "Savings" | "Investments",
           lastActivity: "No activity yet",
           routingNumber: "021000021",
-          iban: `US89 NSTR 0210 0002 1000 ${acc.account_number.slice(-4)}`,
-          swift: "NSTRUS33XXX",
+          iban: `US89 FNCR 0210 0002 1000 ${acc.account_number.slice(-4)}`,
+          swift: "FNCRUS33XXX",
           dateOpened: "Oct 12, 2024",
-          branch: "Northstar HQ - New York",
+          branch: "FINACORM HQ - New York",
         }));
         setAccounts(formatted);
       } catch (err) {
@@ -173,7 +173,7 @@ export default function TransfersPage() {
           date: dateObj.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
           time: dateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
           dateISO: dateObj.toISOString(),
-          sender: data.sourceAccount ? data.sourceAccount.name : "Northstar Account",
+          sender: data.sourceAccount ? data.sourceAccount.name : "FINACORM Account",
           senderAccount: data.sourceAccount ? data.sourceAccount.number : "•••• 0000",
           recipient: data.recipientName,
           recipientAccount: data.recipientAccount,

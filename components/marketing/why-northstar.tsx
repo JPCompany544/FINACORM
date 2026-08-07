@@ -15,7 +15,7 @@ const features = [
   {
     icon: Landmark,
     title: "Financial Strength",
-    description: "Backed by a stable financial foundation, Northstar delivers dependable banking solutions you can rely on every day.",
+    description: "Backed by a stable financial foundation, FINACORM delivers dependable banking solutions you can rely on every day.",
   },
   {
     icon: Globe2,
@@ -50,7 +50,7 @@ const featureVariants = {
   },
 };
 
-export const WhyNorthstar: React.FC = () => {
+export const WhyFINACORM: React.FC = () => {
   return (
     <section className="py-[120px] bg-[#FFFFFF] select-none overflow-hidden">
       <Container className="max-w-[1280px]">
@@ -66,7 +66,7 @@ export const WhyNorthstar: React.FC = () => {
           >
             <Image
               src="/Why.jpg"
-              alt="Northstar banking professionals"
+              alt="FINACORM banking professionals"
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 45vw"
@@ -84,7 +84,7 @@ export const WhyNorthstar: React.FC = () => {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 className="inline-block text-xs font-bold uppercase tracking-widest text-[#0F766E]"
               >
-                WHY NORTHSTAR
+                WHY FINACORM
               </motion.span>
               
               <motion.h2 
@@ -104,7 +104,7 @@ export const WhyNorthstar: React.FC = () => {
                 transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
                 className="text-lg text-text-secondary leading-relaxed"
               >
-                For decades, Northstar Bank has combined financial strength, personalized service and advanced digital banking to help individuals, families and businesses achieve their financial goals with confidence.
+                For decades, FINACORM Bank has combined financial strength, personalized service and advanced digital banking to help individuals, families and businesses achieve their financial goals with confidence.
               </motion.p>
             </div>
 

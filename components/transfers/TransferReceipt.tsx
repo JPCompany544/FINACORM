@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Download, Share2, Printer, ArrowLeft, RefreshCw, FileText, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/app-shell";
 import { TransferRecord } from "@/constants/mock-transfers";
+import { BRAND_NAME } from "@/constants";
 
 interface TransferReceiptProps {
   record: TransferRecord | null;
@@ -44,7 +45,7 @@ export const TransferReceipt: React.FC<TransferReceiptProps> = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-primary" />
-              <span className="text-xs font-black text-foreground tracking-tight">NORTHSTAR BANK</span>
+              <span className="text-xs font-black text-foreground tracking-tight">{BRAND_NAME.toUpperCase()}</span>
             </div>
             <p className="text-[9px] font-semibold text-text-secondary">Receipt {record.receiptNumber}</p>
           </div>

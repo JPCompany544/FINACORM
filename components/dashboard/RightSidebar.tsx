@@ -5,6 +5,7 @@ import { Calendar, HelpCircle, MessageSquare, PhoneCall, TrendingUp, ArrowDown, 
 import { MOCK_RATES, MOCK_EVENTS } from "@/constants/mock-dashboard";
 import { useToast } from "@/components/app-shell";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/constants";
 
 import { loadTawkSupport } from "@/lib/tawk";
 
@@ -16,7 +17,7 @@ export const RightSidebar: React.FC = () => {
   };
 
   const handleSupportCall = () => {
-    info("Emergency Support Call", "Dialing Northstar Bank emergency customer support desk...");
+    info("Emergency Support Call", `Dialing ${BRAND_NAME} emergency customer support desk...`);
   };
 
   return (
