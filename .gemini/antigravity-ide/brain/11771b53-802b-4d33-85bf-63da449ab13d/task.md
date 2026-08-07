@@ -1,0 +1,42 @@
+# Tasks
+
+- [x] Add custom radii and `.hide-scrollbar` utility to `app/globals.css`
+- [x] Implement the Security marketing section component in `components/marketing/security.tsx`
+- [x] Integrate `<Security />` in `app/(marketing)/page.tsx`
+- [x] Create Call-To-Action component in `components/marketing/call-to-action.tsx` and integrate it
+- [x] Re-design page file removing style guide section
+- [x] Build premium reusable split AuthLayout and components in `components/auth/`
+- [x] Relocate auth layout static texts to `constants/auth.ts`
+- [x] Implement multi-step registration flow wizard with all 16 required fields in `app/(auth)/register/page.tsx`
+- [x] Build unified AppShell context provider and hooks (`useSidebar`, `useSearch`, `useNotifications`) in `components/app-shell/context.tsx`
+- [x] Create custom Toast system with animation in `components/app-shell/Toast.tsx`
+- [x] Implement Command Palette SearchModal with Cmd+K matching shortcuts/transactions in `components/app-shell/SearchModal.tsx`
+- [x] Build NotificationDrawer sliding drawer panel in `components/app-shell/NotificationDrawer.tsx`
+- [x] Build responsive off-canvas and expanded Sidebar in `components/app-shell/Sidebar.tsx`
+- [x] Create TopNavigation containing breadcrumbs, notifications bell, and dropdowns in `components/app-shell/TopNavigation.tsx`
+- [x] Implement PageLayout (PageContainer, PageHeader, PageBody) in `components/app-shell/PageLayout.tsx`
+- [x] Create SystemComponents for LoadingOverlay and ErrorState in `components/app-shell/SystemComponents.tsx`
+- [x] Create mock data database inside `constants/mock-dashboard.ts`
+- [x] Create components in `components/dashboard/`:
+  - [x] `DashboardOverview.tsx` (Financial Overview with balance and sub-accounts)
+  - [x] `QuickActions.tsx` (Six action shortcuts)
+  - [x] `RecentActivity.tsx` (Timeline transactions receipt dialog)
+  - [x] `CardsCarousel.tsx` (Active cards settings and PIN Reveal)
+  - [x] `Insights.tsx` (Alert milestone indicators)
+  - [x] `UpcomingPayments.tsx` (Invoice checkouts)
+  - [x] `NotificationsPanel.tsx` (Grouped security logs)
+  - [x] `GoalsCard.tsx` (Savings milestones progress bars)
+  - [x] `RightSidebar.tsx` (Live exchange rates and events calendar)
+  - [x] `DashboardSkeletonPlaceholder.tsx` (Loading state layouts)
+  - [x] `EmptyStateView.tsx` (No results alerts)
+- [x] Update dashboard page `app/(dashboard)/dashboard/page.tsx` with dynamic client dates, skeletons, and layouts
+- [x] Update Dashboard Layout and Page views to integrate with the new AppShell
+- [x] Create accounts mock data database in `constants/mock-accounts.ts`
+- [x] Create components in `components/accounts/`:
+  - [x] `AccountSummary.tsx` (Grid of checking, savings, brokerage, and total balances)
+  - [x] `AccountCard.tsx` (Cards with details modal view containing ABA routing/swift info)
+  - [x] `AccountFilters.tsx` (Filter tabs and search input query)
+  - [x] `QuickActions.tsx` (Transfer, scan checks, statements, and download IBAN triggers)
+- [x] Overwrite layout and filter controls on dashboard accounts page `app/(dashboard)/dashboard/accounts/page.tsx`
+- [x] Create account details dynamic route page `app/(dashboard)/dashboard/accounts/[id]/page.tsx` showing ABA/IBAN metadata copy panels, layout actions, tabs interface (Overview, Transactions, Statements, Information), and manager sidebar contacts
+- [x] Build & Verify the application
