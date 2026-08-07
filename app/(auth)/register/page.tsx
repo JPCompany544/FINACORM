@@ -28,6 +28,7 @@ import { FormSuccess } from "@/components/auth/FormSuccess";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordStrength";
 import { signUpUser } from "@/lib/supabase";
+import { BRAND_NAME } from "@/constants";
 
 // ─── Static data ─────────────────────────────────────────────────────────────
 
@@ -275,7 +276,7 @@ export default function RegisterPage() {
       {/* ── Header + progress ──────────────────────────────────────────── */}
       <div className="flex flex-col items-center gap-3">
         <AuthHeader
-          title="Create Your Northstar Account"
+          title={`Create Your ${BRAND_NAME} Account`}
           description={
             isSuccess
               ? successMessage

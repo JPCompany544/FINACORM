@@ -16,6 +16,7 @@ import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { AUTH_FORGOT_PASSWORD_CONTENT, AUTH_VALIDATION } from "@/constants/auth";
 
 import { usePasswordReset } from "@/hooks/usePasswordReset";
+import { BRAND_NAME } from "@/constants";
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -247,7 +248,7 @@ export default function ForgotPasswordPage() {
 
       {/* ── Card footer ───────────────────────────────────────────────── */}
       <AuthFooter>
-        © {new Date().getFullYear()} Northstar Bank — All rights reserved.
+        © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
       </AuthFooter>
     </AuthCard>
   );

@@ -9,9 +9,10 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { AuthFooter } from "@/components/auth/AuthFooter";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
+import { BRAND_NAME } from "@/constants";
 
-const STEPS = [
-  "Open the email from Northstar Bank.",
+const STEPS = (brand: string) => [
+  `Open the email from ${brand}.`,
   'Click the "Verify Email Address" button.',
   "You'll be redirected to complete your account setup.",
 ];
@@ -47,7 +48,7 @@ export default function VerifyEmailPage() {
 
       <AuthHeader
         title="Check Your Email"
-        description="We've sent a verification link to your email address. Click the link to activate your Northstar Bank account."
+        description={`We've sent a verification link to your email address. Click the link to activate your ${BRAND_NAME} account.`}
       />
 
       {/* Step-by-step instructions */}
@@ -57,7 +58,7 @@ export default function VerifyEmailPage() {
         transition={{ delay: 0.15, duration: 0.35, ease: "easeOut" as const }}
         className="rounded-xl border border-border bg-muted/5 p-4 space-y-3"
       >
-        {STEPS.map((step, i) => (
+        {STEPS(BRAND_NAME).map((step, i) => (
           <div key={i} className="flex items-start gap-3">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-extrabold text-primary">
               {i + 1}

@@ -17,6 +17,7 @@ import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AUTH_LOGIN_CONTENT, AUTH_VALIDATION } from "@/constants/auth";
 import { signInUser } from "@/lib/supabase";
+import { BRAND_NAME } from "@/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -269,7 +270,7 @@ export default function LoginPage() {
 
       {/* ── Card footer ───────────────────────────────────────────────── */}
       <AuthFooter>
-        © {new Date().getFullYear()} Northstar Bank — All rights reserved.
+        © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
       </AuthFooter>
     </AuthCard>
   );
