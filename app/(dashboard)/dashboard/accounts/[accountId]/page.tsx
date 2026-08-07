@@ -54,6 +54,7 @@ const MOCK_SECURITY = {
 };
 
 import { useAuth, createBrowserClient } from "@/lib/supabase";
+import { loadTawkSupport } from "@/lib/tawk";
 
 export default function AccountDetailsPage() {
   const params = useParams();
@@ -589,7 +590,7 @@ export default function AccountDetailsPage() {
 
               <div className="flex flex-col gap-2 pt-1 border-t border-border/30">
                 <button
-                  onClick={() => success("Wealth concierge connected", "Emma Vance has entered secure chat.")}
+                  onClick={loadTawkSupport}
                   className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-custom-md bg-primary text-primary-foreground hover:opacity-95 text-xs font-bold transition-all shadow-soft cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                 >
                   <MessageSquare className="h-3.5 w-3.5" />

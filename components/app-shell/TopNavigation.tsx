@@ -25,6 +25,7 @@ import { useToast } from "./Toast";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/hooks/useLogout";
 import Image from "next/image";
+import { loadTawkSupport } from "@/lib/tawk";
 
 // Helper to map route path to breadcrumb & page title
 function getPageMetaData(pathname: string) {
@@ -218,7 +219,7 @@ export const TopNavigation: React.FC = () => {
 
         {/* Messages Drawer Placeholder */}
         <button
-          onClick={() => success("Support Concierge", "Chat concierge is loading...")}
+          onClick={loadTawkSupport}
           className="h-9 w-9 rounded-xl border border-border/40 text-muted-foreground hover:text-foreground hover:bg-muted/10 flex items-center justify-center transition-all cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-primary/20"
           aria-label="Concierge Live Chat"
         >

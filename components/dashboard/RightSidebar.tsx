@@ -6,11 +6,13 @@ import { MOCK_RATES, MOCK_EVENTS } from "@/constants/mock-dashboard";
 import { useToast } from "@/components/app-shell";
 import { cn } from "@/lib/utils";
 
+import { loadTawkSupport } from "@/lib/tawk";
+
 export const RightSidebar: React.FC = () => {
   const { success, info } = useToast();
 
   const handleSupportChat = () => {
-    success("Concierge Connected", "A private concierge channel has been opened to resolve your ledger query.");
+    loadTawkSupport();
   };
 
   const handleSupportCall = () => {
