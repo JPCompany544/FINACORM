@@ -147,15 +147,13 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Hamburger Mobile Menu */}
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={() => setMobileOpen(true)}
-            className="laptop:hidden text-foreground w-10 h-10 shrink-0"
+            className="laptop:hidden text-foreground hover:text-primary hover:bg-surface-hover flex items-center justify-center rounded-custom-md w-10 h-10 shrink-0 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
             aria-label="Expand mobile navigation drawer"
           >
-            <Menu className="h-5.5 w-5.5" />
-          </Button>
+            <Menu className="h-6 w-6" />
+          </button>
         </div>
       </Container>
 
@@ -202,9 +200,13 @@ export const Navbar: React.FC = () => {
                   <img src="/Logo-main.png" alt="Logo" className="h-4.5 w-auto object-contain shrink-0 select-none" />
                   <span className="font-extrabold text-sm text-primary uppercase tracking-wider">{BRAND_NAME}</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={closeMenu} aria-label="Close menu">
-                  <X className="h-5 w-5" />
-                </Button>
+                <button
+                  onClick={closeMenu}
+                  className="text-muted-foreground hover:text-foreground hover:bg-surface-hover flex items-center justify-center rounded-custom-md w-9 h-9 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                  aria-label="Close menu"
+                >
+                  <X className="h-5.5 w-5.5" />
+                </button>
               </div>
 
               {/* Drawer Body Nav Links */}

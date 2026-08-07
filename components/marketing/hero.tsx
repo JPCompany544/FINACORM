@@ -116,7 +116,7 @@ export const Hero: React.FC = () => {
               variants={itemVariants}
               className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#14B8A6]"
             >
-              🛡 Secure Banking Across Borders
+              Secure Banking Across Borders
             </motion.span>
 
             {/* Headline */}

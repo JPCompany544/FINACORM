@@ -15,7 +15,7 @@ export const TopBar: React.FC = () => {
         <div className="flex items-center space-x-6 mx-auto tablet:mx-0">
           <div className="flex items-center space-x-1.5">
             <ShieldCheck className="h-4 w-4 text-accent" />
-            <span>Member FDIC. Insured up to $250,000.</span>
+            <span>Member FDIC. Insured up to $250M+.</span>
           </div>
           <div className="hidden tablet:flex items-center space-x-1.5">
             <TrendingUp className="h-4 w-4 text-accent" />
