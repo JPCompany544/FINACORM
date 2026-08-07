@@ -12,8 +12,39 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "FINACORM Bank - Production Banking Platform",
-  description: "A production-grade, secure, and modern digital banking experience built for scale.",
+  title: {
+    default: "FINACORM Bank - Premium Digital Banking without Borders",
+    template: "%s | FINACORM Bank"
+  },
+  description: "Experience premium digital banking with enterprise-grade security, global instant transfers, investment accounts, and 24/7 client concierge support.",
+  metadataBase: new URL("https://finacorm.bank"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://finacorm.bank",
+    siteName: "FINACORM Bank",
+    title: "FINACORM Bank - Premium Digital Banking without Borders",
+    description: "Experience premium digital banking with enterprise-grade security, global instant transfers, investment accounts, and 24/7 client concierge support.",
+    images: [
+      {
+        url: "/Logo-main.png",
+        width: 1200,
+        height: 630,
+        alt: "FINACORM Bank Logo",
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FINACORM Bank - Premium Digital Banking without Borders",
+    description: "Experience premium digital banking with enterprise-grade security, global instant transfers, investment accounts, and 24/7 client concierge support.",
+    images: ["/Logo-main.png"],
+  },
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
+  }
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
