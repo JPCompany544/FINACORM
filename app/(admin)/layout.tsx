@@ -14,6 +14,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.Tawk_API && typeof window.Tawk_API.hideWidget === "function") {
+        try {
+          window.Tawk_API.hideWidget();
+        } catch (e) {
+          console.error("Error hiding Tawk widget:", e);
+        }
+      } else {
+        const interval = setInterval(() => {
+          if (window.Tawk_API && typeof window.Tawk_API.hideWidget === "function") {
+            try {
+              window.Tawk_API.hideWidget();
+              clearInterval(interval);
+            } catch (e) {
+              console.error("Error hiding Tawk widget inside interval:", e);
+            }
+          }
+        }, 200);
+        return () => clearInterval(interval);
+      }
+    }
+
+    return () => {
+      if (typeof window !== "undefined" && window.Tawk_API && typeof window.Tawk_API.showWidget === "function") {
+        try {
+          window.Tawk_API.showWidget();
+        } catch (e) {
+          console.error("Error showing Tawk widget:", e);
+        }
+      }
+    };
+  }, []);
+
   const menuItems = [
     { label: "Overview", href: "/admin", icon: BarChart3 },
     { label: "Users Control", href: "/admin/users", icon: Users },
