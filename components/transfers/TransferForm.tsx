@@ -18,10 +18,54 @@ interface TransferFormProps {
 const COUNTRIES = [
   { code: "US", name: "United States", currency: "USD" },
   { code: "GB", name: "United Kingdom", currency: "GBP" },
-  { code: "EU", name: "Eurozone (France, Germany, etc.)", currency: "EUR" },
+  { code: "EU", name: "Eurozone (Germany, France, Italy, etc.)", currency: "EUR" },
   { code: "CA", name: "Canada", currency: "CAD" },
   { code: "AU", name: "Australia", currency: "AUD" },
   { code: "JP", name: "Japan", currency: "JPY" },
+  { code: "NG", name: "Nigeria", currency: "NGN" },
+  { code: "IN", name: "India", currency: "INR" },
+  { code: "CN", name: "China", currency: "CNY" },
+  { code: "BR", name: "Brazil", currency: "BRL" },
+  { code: "MX", name: "Mexico", currency: "MXN" },
+  { code: "SG", name: "Singapore", currency: "SGD" },
+  { code: "ZA", name: "South Africa", currency: "ZAR" },
+  { code: "AE", name: "United Arab Emirates", currency: "AED" },
+  { code: "SA", name: "Saudi Arabia", currency: "SAR" },
+  { code: "NZ", name: "New Zealand", currency: "NZD" },
+  { code: "CH", name: "Switzerland", currency: "CHF" },
+  { code: "SE", name: "Sweden", currency: "SEK" },
+  { code: "NO", name: "Norway", currency: "NOK" },
+  { code: "DK", name: "Denmark", currency: "DKK" },
+  { code: "TR", name: "Turkey", currency: "TRY" },
+  { code: "MY", name: "Malaysia", currency: "MYR" },
+  { code: "ID", name: "Indonesia", currency: "IDR" },
+  { code: "TH", name: "Thailand", currency: "THB" },
+  { code: "PH", name: "Philippines", currency: "PHP" },
+  { code: "VN", name: "Vietnam", currency: "VND" },
+  { code: "PK", name: "Pakistan", currency: "PKR" },
+  { code: "BD", name: "Bangladesh", currency: "BDT" },
+  { code: "EG", name: "Egypt", currency: "EGP" },
+  { code: "KE", name: "Kenya", currency: "KES" },
+  { code: "GH", name: "Ghana", currency: "GHS" },
+  { code: "AR", name: "Argentina", currency: "ARS" },
+  { code: "CL", name: "Chile", currency: "CLP" },
+  { code: "CO", name: "Colombia", currency: "COP" },
+  { code: "PE", name: "Peru", currency: "PEN" },
+  { code: "IL", name: "Israel", currency: "ILS" },
+  { code: "KR", name: "South Korea", currency: "KRW" },
+  { code: "HK", name: "Hong Kong", currency: "HKD" },
+  { code: "TW", name: "Taiwan", currency: "TWD" },
+  { code: "UA", name: "Ukraine", currency: "UAH" },
+  { code: "RU", name: "Russia", currency: "RUB" },
+  { code: "PL", name: "Poland", currency: "PLN" },
+  { code: "RO", name: "Romania", currency: "RON" },
+  { code: "MA", name: "Morocco", currency: "MAD" },
+  { code: "DZ", name: "Algeria", currency: "DZD" },
+  { code: "QA", name: "Qatar", currency: "QAR" },
+  { code: "KW", name: "Kuwait", currency: "KWD" },
+  { code: "OM", name: "Oman", currency: "OMR" },
+  { code: "LK", name: "Sri Lanka", currency: "LKR" },
+  { code: "NP", name: "Nepal", currency: "NPR" },
 ];
 
 function getRoutingLabel(country: string): string {
@@ -190,11 +234,8 @@ export const TransferForm: React.FC<TransferFormProps> = ({
               id="rec-country"
               value={data.destinationCountry}
               onChange={(e) => {
-                const country = e.target.value;
-                const match = COUNTRIES.find((c) => c.name === country);
                 onChange({
-                  destinationCountry: country,
-                  currency: match ? match.currency : "USD",
+                  destinationCountry: e.target.value,
                 });
               }}
               className="w-full bg-surface border border-border rounded-custom-xl px-3.5 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20"
