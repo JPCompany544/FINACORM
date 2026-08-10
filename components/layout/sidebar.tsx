@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ items, isAdmin = false }) => {
       </div>
 
       {/* Navigation List */}
-      <nav className="flex-grow p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-grow p-3 space-y-1 overflow-y-auto hide-scrollbar">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;

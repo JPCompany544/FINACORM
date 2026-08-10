@@ -76,7 +76,7 @@ export const Sidebar: React.FC<{ className?: string; isMobile?: boolean }> = ({
       </div>
 
       {/* ─── NAVIGATION LINKS ───────────────────────────────────────────────── */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin">
+      <nav className="flex-1 overflow-y-auto p-4 space-y-1.5 hide-scrollbar">
         {BANKING_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = item.href === "/dashboard"

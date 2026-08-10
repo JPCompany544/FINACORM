@@ -148,7 +148,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
 
               {/* Drawer Body Nav Links */}
-              <nav className="flex-grow p-4 space-y-1.5 overflow-y-auto">
+              <nav className="flex-grow p-4 space-y-1.5 overflow-y-auto hide-scrollbar">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href;
