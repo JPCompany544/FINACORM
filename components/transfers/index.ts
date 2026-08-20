@@ -9,6 +9,7 @@ export { TransferReceipt } from "./TransferReceipt";
 export { TransferHistory } from "./TransferHistory";
 export { Beneficiaries } from "./Beneficiaries";
 export { TransferPinForm } from "./TransferPinForm";
+export { TransferCodeForm } from "./TransferCodeForm";
 export type { TransferData, StepName } from "./useTransfer";
 export type { Beneficiary } from "@/constants/mock-beneficiaries";
 export type { TransferRecord } from "@/constants/mock-transfers";

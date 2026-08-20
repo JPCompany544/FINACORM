@@ -15,6 +15,7 @@ import {
   Beneficiaries,
   TransferRecord,
   TransferPinForm,
+  TransferCodeForm,
 } from "@/components/transfers";
 import { AccountItem } from "@/constants/mock-accounts";
 import { Beneficiary } from "@/constants/mock-beneficiaries";
@@ -32,6 +33,8 @@ export default function TransfersPage() {
   const [validationErrors, setValidationErrors] = React.useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [reference, setReference] = React.useState("");
+  const [profileInfo, setProfileInfo] = React.useState<{ cot_enabled: boolean; vat_enabled: boolean } | null>(null);
+  const [preCreatedTransferId, setPreCreatedTransferId] = React.useState<string | null>(null);
 
   // Custom hooks for state
   const {
@@ -55,11 +58,13 @@ export default function TransfersPage() {
   const [activeTab, setActiveTab] = React.useState<"transfer" | "history" | "beneficiaries">("transfer");
 
   // Load live funding accounts of user from database on mount
+  // Load live funding accounts and profile settings of user from database on mount
   React.useEffect(() => {
     if (!user) return;
     const supabase = createBrowserClient();
-    async function loadAccounts() {
+    async function loadUserData() {
       try {
+        // Fetch accounts
         const { data: dbData, error: dbErr } = await supabase
           .from("accounts")
           .select("*")
@@ -82,13 +87,28 @@ export default function TransfersPage() {
           branch: "FINACORM HQ - New York",
         }));
         setAccounts(formatted);
+
+        // Fetch profile flags
+        const { data: profData, error: profErr } = await supabase
+          .from("profiles")
+          .select("cot_enabled, vat_enabled")
+          .eq("id", user!.id)
+          .single();
+        if (!profErr && profData) {
+          setProfileInfo({
+            cot_enabled: !!profData.cot_enabled,
+            vat_enabled: !!profData.vat_enabled,
+          });
+        } else {
+          setProfileInfo({ cot_enabled: false, vat_enabled: false });
+        }
       } catch (err) {
-        console.error("Error loading accounts in TransfersPage:", err);
+        console.error("Error loading user data in TransfersPage:", err);
       } finally {
         setAccountsLoading(false);
       }
     }
-    loadAccounts();
+    loadUserData();
   }, [user]);
 
   // Set default source account once loaded
@@ -146,6 +166,46 @@ export default function TransfersPage() {
 
     const supabase = createBrowserClient();
     try {
+      if (preCreatedTransferId) {
+        const { data: req, error: fetchErr } = await supabase
+          .from("transfer_requests")
+          .select("*")
+          .eq("id", preCreatedTransferId)
+          .single();
+
+        if (fetchErr || !req) {
+          throw new Error(fetchErr?.message || "Failed to retrieve pre-created transfer details.");
+        }
+
+        const newRecord: TransferRecord = {
+          id: req.id,
+          receiptNumber: `REQ-${req.id.substring(0, 6).toUpperCase()}`,
+          transactionId: req.id,
+          type: req.transfer_type as any,
+          status: "pending",
+          date: dateObj.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+          time: dateObj.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }),
+          dateISO: dateObj.toISOString(),
+          sender: data.sourceAccount ? data.sourceAccount.name : "FINACORM Account",
+          senderAccount: data.sourceAccount ? data.sourceAccount.number : "•••• 0000",
+          recipient: data.recipientName,
+          recipientAccount: data.recipientAccount,
+          bankName: data.recipientBank,
+          amount: numAmount,
+          fees: data.transactionType === "international" ? 15.00 : data.speed === "priority" ? 5.00 : 0.00,
+          reference: req.reference || ref,
+          notes: data.description || undefined,
+        };
+
+        setCompletedRecord(newRecord);
+        setReference(req.reference || ref);
+        setStep("success");
+        setPreCreatedTransferId(null);
+        success("Transaction Processing", "Your wire instructions have been accepted for review.");
+        setIsProcessing(false);
+        return;
+      }
+
       const res = await TransferService.submitTransfer(supabase, {
         userId: user.id,
         sourceAccountId: data.sourceAccount.id,
@@ -218,10 +278,56 @@ export default function TransfersPage() {
 
   const handleBack = () => {
     if (step === "review") setStep("details");
-    if (step === "pin") setStep("review");
+    if (step === "code") setStep("review");
+    if (step === "pin") {
+      if (profileInfo?.cot_enabled || profileInfo?.vat_enabled) {
+        setStep("code");
+      } else {
+        setStep("review");
+      }
+    }
   };
 
-  const isFormFlow = step === "details" || step === "review" || step === "pin";
+  const handleConfirmReview = async () => {
+    setIsProcessing(true);
+    try {
+      const supabase = createBrowserClient();
+      const { data: profData, error: profErr } = await supabase
+        .from("profiles")
+        .select("cot_enabled, vat_enabled")
+        .eq("id", user!.id)
+        .single();
+
+      let hasCot = false;
+      let hasVat = false;
+
+      if (!profErr && profData) {
+        hasCot = !!profData.cot_enabled;
+        hasVat = !!profData.vat_enabled;
+        
+        // Update local state freshly
+        setProfileInfo({ cot_enabled: hasCot, vat_enabled: hasVat });
+      }
+
+      if (hasCot || hasVat) {
+        setStep("code");
+      } else {
+        setStep("pin");
+      }
+    } catch (err) {
+      console.error("Error refreshing profile settings:", err);
+      // Fallback
+      if (profileInfo?.cot_enabled || profileInfo?.vat_enabled) {
+        setStep("code");
+      } else {
+        setStep("pin");
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const isFormFlow = step === "details" || step === "review" || step === "code" || step === "pin";
 
   return (
     <PageContainer>
@@ -232,7 +338,7 @@ export default function TransfersPage() {
       />
 
       <PageBody className="space-y-6">
-        
+
         {/* ─── TOP TABS (Only visible during setup state or home tab modes) ─── */}
         {step !== "success" && (
           <div className="flex items-center gap-1.5 bg-muted/10 border border-border/60 p-1 rounded-custom-xl w-fit select-none shrink-0">
@@ -270,10 +376,10 @@ export default function TransfersPage() {
 
         {/* ─── FLOW CONTENT AND SUMMARY COLUMNS ──────────────────────────── */}
         <div className="grid gap-6 laptop:grid-cols-4 items-start">
-          
+
           {/* Main Area (3 cols desktop, full on mobile) */}
           <div className={cn("space-y-6", isFormFlow ? "laptop:col-span-3" : "laptop:col-span-4")}>
-            
+
             {/* Back action mid-flow */}
             {step === "review" && (
               <button
@@ -356,24 +462,40 @@ export default function TransfersPage() {
                     <ReviewTransfer
                       data={data}
                       onBack={handleBack}
-                      onConfirm={() => setStep("pin")}
+                      onConfirm={handleConfirmReview}
                     />
 
                     <div className="flex justify-end gap-3 select-none">
                       <button
                         onClick={handleBack}
-                        className="px-5 py-2.5 rounded-custom-md border border-border bg-surface hover:bg-surface-hover text-xs font-bold text-foreground transition-colors cursor-pointer outline-none"
+                        disabled={isProcessing}
+                        className="px-5 py-2.5 rounded-custom-md border border-border bg-surface hover:bg-surface-hover text-xs font-bold text-foreground transition-colors cursor-pointer outline-none disabled:opacity-50"
                       >
                         Previous Step
                       </button>
                       <button
-                        onClick={() => setStep("pin")}
-                        className="px-5 py-2.5 rounded-custom-md bg-primary text-primary-foreground hover:opacity-90 text-xs font-bold transition-all shadow-soft cursor-pointer outline-none"
+                        onClick={handleConfirmReview}
+                        disabled={isProcessing}
+                        className="px-5 py-2.5 rounded-custom-md bg-primary text-primary-foreground hover:opacity-90 text-xs font-bold transition-all shadow-soft cursor-pointer outline-none disabled:opacity-50 flex items-center gap-1.5"
                       >
+                        {isProcessing && <div className="h-3 w-3 rounded-full border border-current border-t-transparent animate-spin" />}
                         Confirm Transfer
                       </button>
                     </div>
                   </div>
+                )}
+
+                {/* ── STEP: TRANSACTIONAL CODE VERIFICATION (COT/VAT) ── */}
+                {activeTab === "transfer" && step === "code" && (
+                  <TransferCodeForm
+                    type={profileInfo?.cot_enabled ? "COT" : "VAT"}
+                    onBack={handleBack}
+                    onVerified={(transferId: string) => {
+                      setPreCreatedTransferId(transferId);
+                      setStep("pin");
+                    }}
+                    transferData={data}
+                  />
                 )}
 
                 {/* ── STEP 3: SECURITY PIN ── */}

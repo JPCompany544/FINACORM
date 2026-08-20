@@ -35,6 +35,7 @@ export const INITIAL_TRANSFER_DATA: TransferData = {
 export type StepName =
   | "details"
   | "review"
+  | "code"
   | "pin"
   | "success"
   | "receipt";

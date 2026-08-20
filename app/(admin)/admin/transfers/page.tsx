@@ -112,11 +112,11 @@ export default function AdminTransfersPage() {
           ...r,
           customer: prof
             ? {
-                first_name: prof.first_name,
-                last_name: prof.last_name,
-                customer_number: prof.customer_number,
-                email: `${prof.first_name.toLowerCase()}.${prof.last_name.toLowerCase()}@northstar.com`,
-              }
+              first_name: prof.first_name,
+              last_name: prof.last_name,
+              customer_number: prof.customer_number,
+              email: `${prof.first_name.toLowerCase()}.${prof.last_name.toLowerCase()}@northstar.com`,
+            }
             : undefined,
         };
       });
@@ -135,7 +135,7 @@ export default function AdminTransfersPage() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   // Initial load & Realtime subscription
@@ -530,8 +530,8 @@ export default function AdminTransfersPage() {
                         selectedRequest.status === "APPROVED"
                           ? "success"
                           : selectedRequest.status === "DECLINED"
-                          ? "failed"
-                          : "pending"
+                            ? "failed"
+                            : "pending"
                       }
                     >
                       {selectedRequest.status === "PENDING_APPROVAL" ? "PENDING" : selectedRequest.status}

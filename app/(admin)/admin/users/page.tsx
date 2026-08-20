@@ -37,6 +37,8 @@ interface Customer {
   status: string;
   currency: string;
   created_at: string;
+  cot_enabled: boolean;
+  vat_enabled: boolean;
 }
 
 // ─── DETAIL PANEL ────────────────────────────────────────────────────────────
@@ -45,11 +47,56 @@ function CustomerDetailPanel({
   customer,
   onClose,
   onCredit,
+  onRefresh,
 }: {
   customer: Customer;
   onClose: () => void;
   onCredit: () => void;
+  onRefresh: () => void;
 }) {
+  const supabase = createBrowserClient();
+  const { success: toastSuccess, error: toastError } = useToast();
+  const [isToggling, setIsToggling] = React.useState(false);
+
+  const handleToggleFlag = async (type: "COT" | "VAT") => {
+    setIsToggling(true);
+    try {
+      const nextCot = type === "COT" ? !customer.cot_enabled : customer.cot_enabled;
+      const nextVat = type === "VAT" ? !customer.vat_enabled : customer.vat_enabled;
+
+      // Try RPC first
+      const { error: rpcError } = await supabase.rpc("admin_update_profile_verification_flags", {
+        p_user_id: customer.id,
+        p_cot_enabled: nextCot,
+        p_vat_enabled: nextVat,
+      });
+
+      if (rpcError) {
+        console.warn("RPC failed, falling back to direct update:", rpcError);
+        // Fallback: direct table update
+        const { error: directError } = await supabase
+          .from("profiles")
+          .update({
+            cot_enabled: nextCot,
+            vat_enabled: nextVat,
+          })
+          .eq("id", customer.id);
+
+        if (directError) throw directError;
+      }
+
+      toastSuccess(
+        "Verification Flag Updated",
+        `Successfully updated ${type} verification code requirement for ${customer.first_name} ${customer.last_name}.`
+      );
+      onRefresh();
+    } catch (err: any) {
+      toastError("Update Failed", err.message || "An error occurred while updating settings.");
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
   return (
     <aside className="w-80 shrink-0 border-l border-border bg-surface flex flex-col h-full overflow-y-auto">
       {/* Header */}
@@ -117,7 +164,7 @@ function CustomerDetailPanel({
               value={
                 customer.account_type && customer.account_type !== "—"
                   ? customer.account_type.charAt(0).toUpperCase() +
-                    customer.account_type.slice(1).toLowerCase()
+                  customer.account_type.slice(1).toLowerCase()
                   : "—"
               }
             />
@@ -153,15 +200,43 @@ function CustomerDetailPanel({
       </div>
 
       {/* Footer CTA */}
-      <div className="p-4 border-t border-border/60 shrink-0">
+      <div className="p-4 border-t border-border/60 shrink-0 space-y-2.5">
         {customer.status === "ACTIVE" ? (
-          <button
-            onClick={onCredit}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground hover:opacity-90 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer outline-none"
-          >
-            <DollarSign className="h-4 w-4" />
-            Credit Account
-          </button>
+          <>
+            <button
+              onClick={onCredit}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground hover:opacity-90 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer outline-none"
+            >
+              <DollarSign className="h-4 w-4" />
+              Credit Account
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleToggleFlag("COT")}
+                disabled={isToggling}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2 px-2.5 border rounded-lg text-[10px] font-bold transition-all cursor-pointer outline-none",
+                  customer.cot_enabled
+                    ? "bg-amber-500/10 border-amber-500/20 text-amber-600 font-extrabold"
+                    : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
+                )}
+              >
+                COT: {customer.cot_enabled ? "ON" : "OFF"}
+              </button>
+              <button
+                onClick={() => handleToggleFlag("VAT")}
+                disabled={isToggling}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 py-2 px-2.5 border rounded-lg text-[10px] font-bold transition-all cursor-pointer outline-none",
+                  customer.vat_enabled
+                    ? "bg-amber-500/10 border-amber-500/20 text-amber-600 font-extrabold"
+                    : "border-border bg-surface hover:bg-surface-hover text-muted-foreground"
+                )}
+              >
+                VAT: {customer.vat_enabled ? "ON" : "OFF"}
+              </button>
+            </div>
+          </>
         ) : (
           <div className="p-3 bg-muted/10 border border-border/40 text-center rounded-lg text-[10px] font-bold text-muted-foreground">
             Inactive account — cannot be adjusted.
@@ -506,6 +581,8 @@ export default function AdminUsersPage() {
           status: acc?.status ?? "INACTIVE",
           currency: acc?.currency ?? "USD",
           created_at: p.created_at,
+          cot_enabled: p.cot_enabled ?? false,
+          vat_enabled: p.vat_enabled ?? false,
         };
       });
 
@@ -517,8 +594,8 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  // supabase instance is stable; selectedCustomer intentionally excluded
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // supabase instance is stable; selectedCustomer intentionally excluded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   React.useEffect(() => {
@@ -678,7 +755,7 @@ export default function AdminUsersPage() {
                         <td className="py-3.5 px-5 capitalize whitespace-nowrap">
                           {cust.account_type !== "—"
                             ? cust.account_type.charAt(0).toUpperCase() +
-                              cust.account_type.slice(1).toLowerCase()
+                            cust.account_type.slice(1).toLowerCase()
                             : "—"}
                         </td>
                         <td className="py-3.5 px-5 text-right font-bold text-foreground whitespace-nowrap">
@@ -732,6 +809,7 @@ export default function AdminUsersPage() {
             customer={selectedCustomer}
             onClose={() => setSelectedCustomer(null)}
             onCredit={() => setIsCreditModalOpen(true)}
+            onRefresh={handleCreditSuccess}
           />
         )}
       </div>

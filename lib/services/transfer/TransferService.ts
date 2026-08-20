@@ -15,6 +15,10 @@ export interface SubmitTransferArgs {
   transferSpeed: string;
   description?: string;
   reference: string;
+  cotCode?: string;
+  vatCode?: string;
+  cotStatus?: string;
+  vatStatus?: string;
 }
 
 export interface ServiceResponse<T = any> {
@@ -60,6 +64,10 @@ export const TransferService = {
           transfer_speed: args.transferSpeed,
           description: args.description || "",
           status: "PENDING_APPROVAL",
+          cot_code: args.cotCode || null,
+          vat_code: args.vatCode || null,
+          cot_status: args.cotStatus || "NONE",
+          vat_status: args.vatStatus || "NONE",
         })
         .select()
         .single();
@@ -258,9 +266,8 @@ export const TransferService = {
         await supabase.from("notifications").insert({
           user_id: req.user_id,
           title: "Transfer Declined",
-          message: `Your transfer of ${req.amount} ${req.currency} to ${req.recipient_name} has been declined. ${
-            reason ? `Reason: ${reason}` : ""
-          }`,
+          message: `Your transfer of ${req.amount} ${req.currency} to ${req.recipient_name} has been declined. ${reason ? `Reason: ${reason}` : ""
+            }`,
           read: false,
         });
       } catch (e) {
@@ -292,6 +299,69 @@ export const TransferService = {
       return { success: true, data };
     } catch (err: any) {
       return { success: false, error: err.message || "An unexpected error occurred." };
+    }
+  },
+
+  /**
+   * Update the status of COT or VAT code.
+   */
+  async updateTransferCodeStatus(
+    supabase: SupabaseClient,
+    transferId: string,
+    type: "COT" | "VAT",
+    status: "APPROVED" | "DECLINED",
+    adminId: string
+  ): Promise<ServiceResponse> {
+    if (!transferId) return { success: false, error: "Transfer ID is required." };
+    if (!adminId) return { success: false, error: "Admin ID is required." };
+
+    try {
+      // Try the secure RPC first
+      const { error: rpcErr } = await supabase.rpc("admin_update_transfer_code_status", {
+        p_transfer_id: transferId,
+        p_type: type,
+        p_status: status,
+      });
+
+      if (rpcErr) {
+        console.warn("RPC failed, falling back to direct table update:", rpcErr);
+
+        const updateData: any = {};
+        if (type === "COT") {
+          updateData.cot_status = status;
+        } else {
+          updateData.vat_status = status;
+        }
+
+        if (status === "DECLINED") {
+          updateData.status = "DECLINED";
+          updateData.admin_reason = `${type} code verification was declined by administrator.`;
+        }
+
+        const { error: updErr } = await supabase
+          .from("transfer_requests")
+          .update(updateData)
+          .eq("id", transferId);
+
+        if (updErr) throw updErr;
+      }
+
+      // Create Audit Log
+      try {
+        await supabase.from("transfer_audits").insert({
+          admin_id: adminId,
+          transfer_id: transferId,
+          action: status === "APPROVED" ? "APPROVE" : "DECLINE",
+          reason: `${type} Code Verification ${status.toLowerCase()}`,
+        });
+      } catch (e) {
+        console.warn("Failed to log code update audit:", e);
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      console.error("Error updating transfer code status:", err);
+      return { success: false, error: err.message || "Could not update code verification status." };
     }
   },
 };
