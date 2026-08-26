@@ -29,21 +29,9 @@ import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordStrength";
 import { signUpUser } from "@/lib/supabase";
 import { BRAND_NAME } from "@/constants";
+import { NATIONALITIES } from "@/constants/nationalities";
 
 // ─── Static data ─────────────────────────────────────────────────────────────
-
-const NATIONALITIES = [
-  { value: "us", label: "United States" },
-  { value: "ca", label: "Canada" },
-  { value: "gb", label: "United Kingdom" },
-  { value: "de", label: "Germany" },
-  { value: "fr", label: "France" },
-  { value: "ch", label: "Switzerland" },
-  { value: "jp", label: "Japan" },
-  { value: "au", label: "Australia" },
-  { value: "sg", label: "Singapore" },
-  { value: "ae", label: "United Arab Emirates" },
-];
 
 const STEP_LABELS = ["Personal Details", "Profile & Jurisdiction", "Security Credentials"] as const;
 
