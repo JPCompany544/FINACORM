@@ -59,12 +59,13 @@ export async function signUpUser({
   const supabase = await createClient();
 
   try {
-    console.log("[SIGNUP DIAGNOSTIC] Calling supabase.auth.signUp() with emailRedirectTo:", `${origin}/auth/callback`);
+    const redirectUrl = origin ? `${origin}/login` : "https://finacormbank.com/login";
+    console.log("[SIGNUP DIAGNOSTIC] Calling supabase.auth.signUp() with emailRedirectTo:", redirectUrl);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${origin}/auth/callback`,
+        emailRedirectTo: redirectUrl,
         data: {
           first_name,
           last_name,
