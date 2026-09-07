@@ -18,6 +18,9 @@ import {
   Calendar,
   AlertCircle,
   TrendingUp,
+  Trash2,
+  AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/components/app-shell";
 
@@ -47,12 +50,16 @@ function CustomerDetailPanel({
   customer,
   onClose,
   onCredit,
+  onDelete,
   onRefresh,
+  currentAdminId,
 }: {
   customer: Customer;
   onClose: () => void;
   onCredit: () => void;
+  onDelete: () => void;
   onRefresh: () => void;
+  currentAdminId?: string;
 }) {
   const supabase = createBrowserClient();
   const { success: toastSuccess, error: toastError } = useToast();
@@ -242,6 +249,24 @@ function CustomerDetailPanel({
             Inactive account — cannot be adjusted.
           </div>
         )}
+
+        {/* Delete Customer Button */}
+        <div className="pt-2 border-t border-border/40">
+          <button
+            onClick={onDelete}
+            disabled={customer.id === currentAdminId}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer outline-none border",
+              customer.id === currentAdminId
+                ? "bg-muted/10 border-border text-muted-foreground cursor-not-allowed opacity-50"
+                : "bg-red-500/10 hover:bg-red-600 text-red-600 hover:text-white border-red-500/20 hover:border-transparent shadow-sm"
+            )}
+            title={customer.id === currentAdminId ? "Cannot delete own admin account" : "Permanently delete customer account"}
+          >
+            <Trash2 className="h-4 w-4" />
+            {customer.id === currentAdminId ? "Cannot Delete Self" : "Delete Customer Account"}
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -517,6 +542,187 @@ function CreditModal({
   );
 }
 
+// ─── DELETE CUSTOMER MODAL ───────────────────────────────────────────────────
+
+function DeleteCustomerModal({
+  customer,
+  adminId,
+  onClose,
+  onSuccess,
+}: {
+  customer: Customer;
+  adminId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const supabase = createBrowserClient();
+  const { success: toastSuccess, error: toastError } = useToast();
+  const [confirmText, setConfirmText] = React.useState("");
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const isConfirmed = confirmText.trim().toUpperCase() === "DELETE";
+
+  const handleDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isConfirmed || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await AccountService.deleteCustomer(supabase, {
+        customerId: customer.id,
+        performedBy: adminId,
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || "Failed to delete customer.");
+      }
+
+      toastSuccess(
+        "Customer Account Deleted",
+        `${customer.first_name} ${customer.last_name}'s account and records have been purged.`
+      );
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      toastError("Deletion Failed", err.message || "An unexpected error occurred.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 bg-red-500/5">
+          <div className="flex items-center gap-2.5 text-red-500">
+            <div className="p-2 bg-red-500/10 rounded-lg">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wider text-foreground">
+                Delete Customer Account
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Permanent and irreversible action
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="p-1.5 rounded-md hover:bg-muted/15 text-muted-foreground hover:text-foreground cursor-pointer outline-none transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleDelete} className="p-5 space-y-4">
+          {/* Customer Summary Card */}
+          <div className="p-3.5 bg-muted/10 border border-border/60 rounded-lg space-y-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground font-semibold">Customer</span>
+              <span className="font-black text-foreground">
+                {customer.first_name} {customer.last_name}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground font-semibold">Customer ID</span>
+              <span className="font-mono text-[10px] text-foreground font-bold">
+                {customer.customer_number}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground font-semibold">Email</span>
+              <span className="text-foreground font-semibold truncate max-w-[200px]">
+                {customer.email}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground font-semibold">Account No.</span>
+              <span className="font-mono text-[10px] text-foreground font-bold">
+                {customer.account_number}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-1 border-t border-border/40">
+              <span className="text-muted-foreground font-semibold">Current Balance</span>
+              <span
+                className={cn(
+                  "font-black text-xs",
+                  customer.current_balance > 0 ? "text-amber-500 font-extrabold" : "text-foreground"
+                )}
+              >
+                {formatCurrency(customer.current_balance, customer.currency)}
+              </span>
+            </div>
+          </div>
+
+          {/* Warning Message if customer has balance */}
+          {customer.current_balance > 0 && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-lg flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Active Balance Warning</p>
+                <p className="text-[11px] leading-relaxed mt-0.5">
+                  This account currently holds{" "}
+                  <strong>{formatCurrency(customer.current_balance, customer.currency)}</strong>. Deleting will
+                  permanently purge this balance and all ledger records.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Safety Confirmation Input */}
+          <div className="space-y-1.5 pt-1">
+            <label htmlFor="delete-confirm-input" className="text-[11px] font-bold text-foreground block">
+              Type <span className="font-black text-red-500 underline uppercase">DELETE</span> to confirm:
+            </label>
+            <input
+              id="delete-confirm-input"
+              type="text"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="DELETE"
+              disabled={isDeleting}
+              autoFocus
+              className="w-full bg-background border border-border/80 rounded-lg px-3.5 py-2 text-xs font-bold uppercase tracking-wider outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500/50"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2.5 pt-2 border-t border-border/60">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isDeleting}
+              className="flex-1 py-2.5 border border-border bg-surface text-foreground font-bold hover:bg-muted/10 rounded-lg cursor-pointer outline-none text-xs transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!isConfirmed || isDeleting}
+              className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg cursor-pointer outline-none text-xs transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete Account</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function AdminUsersPage() {
@@ -532,6 +738,7 @@ export default function AdminUsersPage() {
 
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
   const [isCreditModalOpen, setIsCreditModalOpen] = React.useState(false);
+  const [customerToDelete, setCustomerToDelete] = React.useState<Customer | null>(null);
 
   // Role check
   const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null);
@@ -631,6 +838,12 @@ export default function AdminUsersPage() {
     }
   }, [loadCustomers, selectedCustomer]);
 
+  const handleDeleteSuccess = React.useCallback(async () => {
+    setCustomerToDelete(null);
+    setSelectedCustomer(null);
+    await loadCustomers();
+  }, [loadCustomers]);
+
   // ─── GUARDS ───────────────────────────────────────────────────────────────
 
   if (authLoading || isAdmin === null) {
@@ -707,13 +920,14 @@ export default function AdminUsersPage() {
                   <th className="py-3 px-5">Type</th>
                   <th className="py-3 px-5 text-right">Balance</th>
                   <th className="py-3 px-5 text-center">Status</th>
+                  <th className="py-3 px-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="border-b border-border/10 animate-pulse">
-                      {Array.from({ length: 7 }).map((_, j) => (
+                      {Array.from({ length: 8 }).map((_, j) => (
                         <td key={j} className="py-4 px-5">
                           <div className="h-3 bg-muted/20 rounded w-full max-w-[120px]" />
                         </td>
@@ -722,13 +936,14 @@ export default function AdminUsersPage() {
                   ))
                 ) : paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                    <td colSpan={8} className="py-12 text-center text-muted-foreground">
                       No customers match your search.
                     </td>
                   </tr>
                 ) : (
                   paginated.map((cust) => {
                     const selected = selectedCustomer?.id === cust.id;
+                    const isSelf = cust.id === user?.id;
                     return (
                       <tr
                         key={cust.id}
@@ -765,6 +980,22 @@ export default function AdminUsersPage() {
                           <Badge variant={cust.status === "ACTIVE" ? "success" : "failed"}>
                             {cust.status}
                           </Badge>
+                        </td>
+                        <td className="py-3.5 px-5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => setCustomerToDelete(cust)}
+                            disabled={isSelf}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                              isSelf
+                                ? "text-muted-foreground opacity-30 cursor-not-allowed"
+                                : "text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20"
+                            )}
+                            title={isSelf ? "Cannot delete own admin account" : "Delete customer account"}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span>Delete</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -809,7 +1040,9 @@ export default function AdminUsersPage() {
             customer={selectedCustomer}
             onClose={() => setSelectedCustomer(null)}
             onCredit={() => setIsCreditModalOpen(true)}
+            onDelete={() => setCustomerToDelete(selectedCustomer)}
             onRefresh={handleCreditSuccess}
+            currentAdminId={user?.id}
           />
         )}
       </div>
@@ -821,6 +1054,16 @@ export default function AdminUsersPage() {
           adminId={user.id}
           onClose={() => setIsCreditModalOpen(false)}
           onSuccess={handleCreditSuccess}
+        />
+      )}
+
+      {/* Delete Customer Modal */}
+      {customerToDelete && user && (
+        <DeleteCustomerModal
+          customer={customerToDelete}
+          adminId={user.id}
+          onClose={() => setCustomerToDelete(null)}
+          onSuccess={handleDeleteSuccess}
         />
       )}
     </div>

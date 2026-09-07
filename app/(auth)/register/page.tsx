@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, ArrowRight, ArrowLeft, UserPlus } from "lucide-react";
+import { Camera, ArrowRight, ArrowLeft, UserPlus, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,7 @@ import { FormError } from "@/components/auth/FormError";
 import { FormSuccess } from "@/components/auth/FormSuccess";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordStrength";
-import { signUpUser } from "@/lib/supabase";
+import { signUpUser, useAuth } from "@/lib/supabase";
 import { BRAND_NAME } from "@/constants";
 import { NATIONALITIES } from "@/constants/nationalities";
 
@@ -47,6 +47,7 @@ const slideVariants = {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { setAuthActionLoading } = useAuth();
 
   const [step, setStep] = React.useState(1);
   const [authState, setAuthState] = React.useState<"idle" | "loading" | "success" | "error">("idle");
@@ -200,6 +201,7 @@ export default function RegisterPage() {
 
     console.log("[CLIENT DIAGNOSTIC] Triggering signup flow with email:", formData.email);
     setAuthState("loading");
+    setAuthActionLoading(true, "Provisioning secure account & encrypting profile data...");
     setServerError("");
 
     try {
@@ -221,13 +223,15 @@ export default function RegisterPage() {
         if (result.sessionConfirmed) {
           console.log("[CLIENT DIAGNOSTIC] Signup successful with immediate session confirmation.");
           setSuccessMessage("Account created! Redirecting to your dashboard…");
-          await new Promise((r) => setTimeout(r, 1200));
+          await new Promise((r) => setTimeout(r, 800));
           router.push("/dashboard");
         } else {
+          setAuthActionLoading(false);
           console.log("[CLIENT DIAGNOSTIC] Signup successful. Verification email sent.");
-          setSuccessMessage("Check your email to verify your account.");
+          setSuccessMessage("Check your inbox (and spam folder) to verify your account.");
         }
       } else {
+        setAuthActionLoading(false);
         console.error("[CLIENT DIAGNOSTIC] Signup server action returned failure:", result.error);
         setAuthState("error");
         setServerError(
@@ -236,6 +240,7 @@ export default function RegisterPage() {
         );
       }
     } catch (err: any) {
+      setAuthActionLoading(false);
       console.error("[CLIENT DIAGNOSTIC] Client caught unhandled error during registration:", err);
       setAuthState("error");
       setServerError(err.message || "An unexpected error occurred during submission.");
@@ -300,8 +305,18 @@ export default function RegisterPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" as const }}
+            className="space-y-4"
           >
             <FormSuccess visible message={successMessage} />
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-1.5 text-left">
+              <div className="flex items-center gap-2 text-amber-500 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>Email Delivery Notice</span>
+              </div>
+              <p className="text-xs text-text-secondary font-medium leading-relaxed">
+                If you do not see the activation email in your primary inbox, please inspect your <strong className="text-foreground font-bold">spam</strong>, <strong className="text-foreground font-bold">junk</strong>, or <strong className="text-foreground font-bold">promotions</strong> folder as automated security messages may occasionally be misfiltered.
+              </p>
+            </div>
           </motion.div>
         ) : (
           <motion.form

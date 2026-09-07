@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Mail, RefreshCw } from "lucide-react";
+import { Mail, RefreshCw, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/AuthCard";
@@ -12,9 +12,9 @@ import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { BRAND_NAME } from "@/constants";
 
 const STEPS = (brand: string) => [
-  `Open the email from ${brand}.`,
-  'Click the "Verify Email Address" button.',
-  "You'll be redirected to complete your account setup.",
+  `Open the email sent from ${brand}.`,
+  'Click the "Verify Email Address" button inside.',
+  "You will be securely redirected to complete your account setup.",
 ];
 
 export default function VerifyEmailPage() {
@@ -47,8 +47,8 @@ export default function VerifyEmailPage() {
       </div>
 
       <AuthHeader
-        title="Check Your Email"
-        description={`We've sent a verification link to your email address. Click the link to activate your ${BRAND_NAME} account.`}
+        title="Check Your Inbox"
+        description={`We've dispatched a secure verification link to your email address. Please follow the instructions to activate your ${BRAND_NAME} account.`}
       />
 
       {/* Step-by-step instructions */}
@@ -70,12 +70,28 @@ export default function VerifyEmailPage() {
         ))}
       </motion.div>
 
-      {/* Resend */}
+      {/* Professional Spam / Delivery Notice Box */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.35 }}
+        className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-1.5 text-left"
+      >
+        <div className="flex items-center gap-2 text-amber-500 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>Email Delivery Notice</span>
+        </div>
+        <p className="text-xs text-text-secondary font-medium leading-relaxed">
+          If you do not see the email in your primary inbox within 1–2 minutes, please inspect your <strong className="text-foreground font-bold">spam</strong>, <strong className="text-foreground font-bold">junk</strong>, or <strong className="text-foreground font-bold">promotions</strong> folder. Automated security messages may occasionally be misfiltered by email service providers.
+        </p>
+      </motion.div>
+
+      {/* Resend Action */}
       <div className="space-y-3">
         <p className="text-center text-xs text-muted-foreground font-medium">
           {resent
-            ? "Verification email resent. Please check your inbox."
-            : "Didn't receive the email? Check your spam folder or resend below."}
+            ? "Verification link dispatched. Please check your inbox and spam folder."
+            : "Have not received your verification link yet?"}
         </p>
         <Button
           type="button"
@@ -89,7 +105,7 @@ export default function VerifyEmailPage() {
         </Button>
       </div>
 
-      <SecurityNotice message="Your information is protected using bank-level encryption and secure authentication standards." />
+      <SecurityNotice message="Your account credentials and personal information are protected under bank-grade security standards." />
 
       <AuthFooter>
         <Link href="/login" className="text-primary hover:underline font-bold">
@@ -99,3 +115,4 @@ export default function VerifyEmailPage() {
     </AuthCard>
   );
 }
+

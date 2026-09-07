@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound, MailCheck, ArrowLeft, RefreshCw } from "lucide-react";
+import { KeyRound, MailCheck, ArrowLeft, RefreshCw, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { AUTH_FORGOT_PASSWORD_CONTENT, AUTH_VALIDATION } from "@/constants/auth";
 
 import { usePasswordReset } from "@/hooks/usePasswordReset";
+import { useAuth } from "@/lib/supabase";
 import { BRAND_NAME } from "@/constants";
 
 // ─── Validation ───────────────────────────────────────────────────────────────
@@ -32,6 +33,7 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { triggerResetLink, loading, success, error, setError } = usePasswordReset();
+  const { setAuthActionLoading } = useAuth();
 
   const [email, setEmail]           = React.useState("");
   const [touched, setTouched]       = React.useState(false);
@@ -63,15 +65,25 @@ export default function ForgotPasswordPage() {
     setTouched(true);
     if (!isFormValid) return;
 
-    await triggerResetLink(email);
-    setResendCountdown(60);
+    setAuthActionLoading(true, "Processing password recovery request...");
+    try {
+      await triggerResetLink(email);
+      setResendCountdown(60);
+    } finally {
+      setAuthActionLoading(false);
+    }
   };
 
   // ── Resend ──────────────────────────────────────────────────────────────────
   const handleResend = async () => {
     if (resendCountdown > 0) return;
-    await triggerResetLink(email);
-    setResendCountdown(60);
+    setAuthActionLoading(true, "Resending password recovery link...");
+    try {
+      await triggerResetLink(email);
+      setResendCountdown(60);
+    } finally {
+      setAuthActionLoading(false);
+    }
   };
 
   return (
@@ -126,6 +138,17 @@ export default function ForgotPasswordPage() {
             {/* Sent-to indicator */}
             <div className="w-full rounded-xl border border-border bg-muted/5 px-4 py-3 text-sm font-semibold text-foreground text-center">
               {email}
+            </div>
+
+            {/* Spam / Delivery Notice Card */}
+            <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-1.5 text-left">
+              <div className="flex items-center gap-2 text-amber-500 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
+                <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>Email Delivery Notice</span>
+              </div>
+              <p className="text-xs text-text-secondary font-medium leading-relaxed">
+                If the email does not appear in your primary inbox within 1–2 minutes, please check your <strong className="text-foreground font-bold">spam</strong>, <strong className="text-foreground font-bold">junk</strong>, or <strong className="text-foreground font-bold">promotions</strong> folder as automated security links may occasionally be misfiltered.
+              </p>
             </div>
 
             {/* Action buttons */}
@@ -248,7 +271,9 @@ export default function ForgotPasswordPage() {
 
       {/* ── Card footer ───────────────────────────────────────────────── */}
       <AuthFooter>
-        © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
+        <span suppressHydrationWarning>
+          © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
+        </span>
       </AuthFooter>
     </AuthCard>
   );

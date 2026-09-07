@@ -349,7 +349,7 @@ export const Footer: React.FC = () => {
         <div className="flex flex-col gap-4 tablet:flex-row tablet:items-center tablet:justify-between">
 
           {/* Left: copyright */}
-          <p className="text-xs text-white/30 font-medium">
+          <p className="text-xs text-white/30 font-medium" suppressHydrationWarning>
             © {new Date().getFullYear()} {BRAND_NAME}. All rights reserved.
           </p>
 

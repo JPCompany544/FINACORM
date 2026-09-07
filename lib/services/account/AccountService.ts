@@ -136,4 +136,43 @@ export const AccountService = {
   async getBalance(_supabase: SupabaseClient, _accountId: string): Promise<ServiceResponse> {
     return { success: false, error: "Not implemented." };
   },
+
+  /**
+   * Permanently delete a customer account and all associated records.
+   * Invokes the admin_delete_user SECURITY DEFINER database RPC.
+   */
+  async deleteCustomer(
+    supabase: SupabaseClient,
+    args: { customerId: string; performedBy?: string }
+  ): Promise<ServiceResponse> {
+    if (!args.customerId) {
+      return { success: false, error: "Customer ID is required." };
+    }
+
+    try {
+      const { data, error } = await supabase.rpc("admin_delete_user", {
+        p_target_user_id: args.customerId,
+      });
+
+      if (error) {
+        console.error("admin_delete_user RPC error:", error);
+        return {
+          success: false,
+          error: error.message || "Failed to delete customer account.",
+        };
+      }
+
+      return {
+        success: true,
+        data,
+      };
+    } catch (err: any) {
+      console.error("AccountService.deleteCustomer exception:", err);
+      return {
+        success: false,
+        error: err.message || "An unexpected error occurred during account deletion.",
+      };
+    }
+  },
 };
+

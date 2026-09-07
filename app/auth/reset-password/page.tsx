@@ -225,7 +225,9 @@ function ResetPasswordPageContent() {
       </AnimatePresence>
 
       <AuthFooter>
-        © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
+        <span suppressHydrationWarning>
+          © {new Date().getFullYear()} {BRAND_NAME} — All rights reserved.
+        </span>
       </AuthFooter>
     </AuthCard>
   );

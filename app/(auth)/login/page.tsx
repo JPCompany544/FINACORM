@@ -16,7 +16,7 @@ import { FormSuccess } from "@/components/auth/FormSuccess";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { AuthDivider } from "@/components/auth/AuthDivider";
 import { AUTH_LOGIN_CONTENT, AUTH_VALIDATION } from "@/constants/auth";
-import { signInUser } from "@/lib/supabase";
+import { signInUser, useAuth } from "@/lib/supabase";
 import { BRAND_NAME } from "@/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -47,6 +47,7 @@ function validatePassword(value: string): string {
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setAuthActionLoading } = useAuth();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -83,6 +84,7 @@ export default function LoginPage() {
     if (!isFormValid) return;
 
     setAuthState("loading");
+    setAuthActionLoading(true, "Authenticating credentials & establishing secure session...");
     setServerError("");
 
     const result = await signInUser({ email, password });
@@ -90,9 +92,10 @@ export default function LoginPage() {
     if (result.success) {
       setAuthState("success");
       // Brief pause so the user sees the success state, then navigate
-      await new Promise((r) => setTimeout(r, 900));
+      await new Promise((r) => setTimeout(r, 600));
       router.push("/dashboard");
     } else {
+      setAuthActionLoading(false);
       setAuthState("error");
       setServerError(
         result.error?.message ?? AUTH_LOGIN_CONTENT.errorMessage
