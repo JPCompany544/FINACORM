@@ -146,15 +146,15 @@ export const Hero: React.FC = () => {
                 className="w-full sm:w-auto px-8 bg-[#0F766E] hover:bg-[#115E59] text-white border-none shadow-medium"
                 asChild
               >
-                <Link href="/register">Open an Account</Link>
+                <Link href="/register">Create Account</Link>
               </Button>
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto px-8 bg-white/5 backdrop-blur-sm border-white/20 hover:bg-white/10 text-white hover:text-white"
+                className="w-full sm:w-auto px-8 bg-white/10 backdrop-blur-sm border-white/30 hover:bg-white/20 text-white hover:text-white shadow-soft transition-all"
                 asChild
               >
-                <Link href="/features">Learn More</Link>
+                <Link href="/login">Sign In</Link>
               </Button>
             </motion.div>
           </motion.div>

@@ -123,17 +123,17 @@ export const CallToAction: React.FC = () => {
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-primary font-bold text-sm px-8 py-4 shadow-floating transition-all duration-200 hover:bg-white/90 hover:shadow-xl"
                 >
-                  Open an Account
+                  Create Account
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </motion.div>
 
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }}>
                 <Link
-                  href="/contact"
+                  href="/login"
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm text-white font-bold text-sm px-8 py-4 transition-all duration-200 hover:bg-white/20 hover:border-white/50"
                 >
-                  Contact Sales
+                  Sign In
                 </Link>
               </motion.div>
             </motion.div>
