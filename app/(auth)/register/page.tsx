@@ -47,7 +47,6 @@ const slideVariants = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { setAuthActionLoading } = useAuth();
 
   const [step, setStep] = React.useState(1);
   const [authState, setAuthState] = React.useState<"idle" | "loading" | "success" | "error">("idle");
@@ -201,7 +200,6 @@ export default function RegisterPage() {
 
     console.log("[CLIENT DIAGNOSTIC] Triggering signup flow with email:", formData.email);
     setAuthState("loading");
-    setAuthActionLoading(true, "Provisioning secure account & encrypting profile data...");
     setServerError("");
 
     try {
@@ -221,17 +219,11 @@ export default function RegisterPage() {
       if (result.success) {
         setAuthState("success");
         if (result.sessionConfirmed) {
-          console.log("[CLIENT DIAGNOSTIC] Signup successful with immediate session confirmation.");
-          setSuccessMessage("Account created! Redirecting to your dashboard…");
-          await new Promise((r) => setTimeout(r, 800));
           router.push("/dashboard");
         } else {
-          setAuthActionLoading(false);
-          console.log("[CLIENT DIAGNOSTIC] Signup successful. Verification email sent.");
           setSuccessMessage("Check your inbox (and spam folder) to verify your account.");
         }
       } else {
-        setAuthActionLoading(false);
         console.error("[CLIENT DIAGNOSTIC] Signup server action returned failure:", result.error);
         setAuthState("error");
         setServerError(
@@ -240,7 +232,6 @@ export default function RegisterPage() {
         );
       }
     } catch (err: any) {
-      setAuthActionLoading(false);
       console.error("[CLIENT DIAGNOSTIC] Client caught unhandled error during registration:", err);
       setAuthState("error");
       setServerError(err.message || "An unexpected error occurred during submission.");

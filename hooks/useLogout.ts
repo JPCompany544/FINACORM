@@ -12,13 +12,11 @@ import { useAuth } from "@/lib/supabase/AuthProvider";
 export function useLogout() {
   const router = useRouter();
   const { success, error: toastError } = useToast();
-  const { setAuthActionLoading } = useAuth();
   const [loading, setLoading] = React.useState(false);
 
   const handleLogout = React.useCallback(async () => {
     if (loading) return;
     setLoading(true);
-    setAuthActionLoading(true, "Terminating session safely & clearing cached credentials...");
 
     try {
       const result = await logoutUser();
@@ -30,14 +28,12 @@ export function useLogout() {
       } else {
         toastError("Logout Failed", result.error || "Unable to sign out. Please try again.");
         setLoading(false);
-        setAuthActionLoading(false);
       }
     } catch (err: any) {
       toastError("Logout Failed", err.message || "An unexpected error occurred.");
       setLoading(false);
-      setAuthActionLoading(false);
     }
-  }, [loading, router, success, toastError, setAuthActionLoading]);
+  }, [loading, router, success, toastError]);
 
   return {
     handleLogout,

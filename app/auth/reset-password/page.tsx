@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound, ShieldAlert, CheckCircle } from "lucide-react";
+import { KeyRound, ShieldAlert, CheckCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { AuthFooter } from "@/components/auth/AuthFooter";
 import { FormError } from "@/components/auth/FormError";
-import { FormSuccess } from "@/components/auth/FormSuccess";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordStrength";
 import { usePasswordReset } from "@/hooks/usePasswordReset";
@@ -30,24 +29,107 @@ function ResetPasswordPageContent() {
   const [touched, setTouched] = React.useState(false);
   const [checkingSession, setCheckingSession] = React.useState(true);
   const [sessionError, setSessionError] = React.useState(false);
+  const [sessionErrorMessage, setSessionErrorMessage] = React.useState(
+    "Your password reset link is invalid, expired, or has already been used."
+  );
 
-  // ─── 1. VERIFY RECOVERY SESSION ──────────────────────────────────────────────
+  // ─── 1. VERIFY RECOVERY SESSION WITH TRIPLE REDUNDANCY ──────────────────────
   React.useEffect(() => {
     const supabase = createBrowserClient();
+    const code = searchParams.get("code");
+    const errorParam = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
 
-    // Check if we have an active authenticated recovery session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
+    let isMounted = true;
+
+    // Check if URL directly brought an error parameter from Supabase
+    if (errorParam || errorDescription) {
+      if (isMounted) {
+        setSessionErrorMessage(
+          errorDescription?.replace(/\+/g, " ") ||
+            "Your password reset link has expired or is invalid. Please request a new one."
+        );
         setSessionError(true);
-        // Briefly delay redirect to let user read the warning
-        setTimeout(() => {
-          router.replace("/forgot-password?error=invalid_session");
-        }, 3000);
-      } else {
         setCheckingSession(false);
       }
-    });
-  }, [router]);
+      return;
+    }
+
+    async function verifyRecoverySession() {
+      try {
+        // ── Step A: Direct PKCE Code Exchange (if arrived with ?code=...) ───────
+        if (code) {
+          console.log("[RESET PASSWORD] Authorization code detected in URL, exchanging...");
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (!exchangeError && data.session) {
+            console.log("[RESET PASSWORD] Code exchanged successfully.");
+            if (isMounted) {
+              setCheckingSession(false);
+              setSessionError(false);
+            }
+            return;
+          } else if (exchangeError) {
+            console.warn("[RESET PASSWORD] Code exchange failed:", exchangeError.message);
+          }
+        }
+
+        // ── Step B: Check Active Session (e.g. from SSR /auth/callback cookies) ──
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        if (existingSession) {
+          console.log("[RESET PASSWORD] Active recovery session confirmed.");
+          if (isMounted) {
+            setCheckingSession(false);
+            setSessionError(false);
+          }
+          return;
+        }
+
+        // ── Step C: Listen to Auth State Change (e.g. hash token parsing) ───────
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          console.log("[RESET PASSWORD] Auth state change event:", event);
+          if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
+            if (isMounted) {
+              setCheckingSession(false);
+              setSessionError(false);
+            }
+          }
+        });
+
+        // ── Step D: Allow brief window for hash/async token hydration ──────────
+        const timer = setTimeout(async () => {
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (isMounted) {
+            if (retrySession) {
+              setCheckingSession(false);
+              setSessionError(false);
+            } else {
+              console.warn("[RESET PASSWORD] No recovery session detected after verification window.");
+              setSessionError(true);
+              setCheckingSession(false);
+            }
+          }
+          subscription.unsubscribe();
+        }, 1200);
+
+        return () => {
+          clearTimeout(timer);
+          subscription.unsubscribe();
+        };
+      } catch (err) {
+        console.error("[RESET PASSWORD] Session verification exception:", err);
+        if (isMounted) {
+          setSessionError(true);
+          setCheckingSession(false);
+        }
+      }
+    }
+
+    verifyRecoverySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchParams]);
 
   // ─── 2. VALIDATION ───────────────────────────────────────────────────────────
   const getPasswordError = () => {
@@ -93,28 +175,52 @@ function ResetPasswordPageContent() {
     return (
       <AuthCard className="max-w-[460px] text-center p-8">
         <div className="flex flex-col items-center gap-4 py-8">
-          {sessionError ? (
-            <>
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-error/10 text-error">
-                <ShieldAlert className="h-6 w-6 animate-bounce" />
-              </div>
-              <h3 className="text-sm font-extrabold text-foreground">Invalid Recovery Link</h3>
-              <p className="text-xs text-text-secondary font-semibold leading-relaxed max-w-xs">
-                Your recovery session is invalid or expired. Redirecting to forgot password helper...
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              <h3 className="text-sm font-extrabold text-foreground">Verifying secure token...</h3>
-            </>
-          )}
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <h3 className="text-sm font-extrabold text-foreground">Verifying recovery token...</h3>
+          <p className="text-xs text-text-secondary font-medium">
+            Please wait while we establish your secure session.
+          </p>
         </div>
       </AuthCard>
     );
   }
 
-  // ─── 5. RENDER PASSWORD UPDATE PANEL ─────────────────────────────────────────
+  // ─── 5. RENDER INVALID / EXPIRED LINK STATE ───────────────────────────────────
+  if (sessionError) {
+    return (
+      <AuthCard className="max-w-[460px] text-center p-8">
+        <div className="flex flex-col items-center gap-5 py-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-error/10 text-error ring-1 ring-error/20">
+            <ShieldAlert className="h-7 w-7" />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-lg font-extrabold text-foreground">Invalid or Expired Link</h3>
+            <p className="text-xs text-text-secondary font-medium leading-relaxed max-w-xs mx-auto">
+              {sessionErrorMessage}
+            </p>
+          </div>
+
+          <div className="w-full space-y-3 pt-2">
+            <Button variant="primary" className="w-full justify-center h-11 text-xs font-bold" asChild>
+              <Link href="/forgot-password">
+                <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                Request New Reset Link
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-center h-11 text-xs font-bold" asChild>
+              <Link href="/login">
+                <ArrowLeft className="h-3.5 w-3.5 mr-2" />
+                Return to Sign In
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </AuthCard>
+    );
+  }
+
+  // ─── 6. RENDER PASSWORD UPDATE PANEL ─────────────────────────────────────────
   return (
     <AuthCard className="max-w-[460px]">
       <div className="flex justify-center">

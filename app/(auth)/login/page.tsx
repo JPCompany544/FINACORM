@@ -47,7 +47,6 @@ function validatePassword(value: string): string {
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuthActionLoading } = useAuth();
 
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -84,18 +83,14 @@ export default function LoginPage() {
     if (!isFormValid) return;
 
     setAuthState("loading");
-    setAuthActionLoading(true, "Authenticating credentials & establishing secure session...");
     setServerError("");
 
     const result = await signInUser({ email, password });
 
     if (result.success) {
       setAuthState("success");
-      // Brief pause so the user sees the success state, then navigate
-      await new Promise((r) => setTimeout(r, 600));
       router.push("/dashboard");
     } else {
-      setAuthActionLoading(false);
       setAuthState("error");
       setServerError(
         result.error?.message ?? AUTH_LOGIN_CONTENT.errorMessage

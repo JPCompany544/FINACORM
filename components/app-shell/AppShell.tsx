@@ -7,7 +7,6 @@ import { Sidebar } from "./Sidebar";
 import { TopNavigation } from "./TopNavigation";
 import { SearchModal } from "./SearchModal";
 import { NotificationDrawer } from "./NotificationDrawer";
-import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 
 interface AppShellInnerProps {
@@ -46,18 +45,9 @@ const AppShellInner: React.FC<AppShellInnerProps> = ({ children }) => {
 
         {/* Scrollable Main Content */}
         <main className="flex-grow overflow-y-auto overflow-x-hidden flex flex-col bg-transparent relative scrollbar-thin">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22, ease: "easeOut" as const }}
-              className="flex-1 flex flex-col"
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          <div key={pathname} className="flex-1 flex flex-col animate-in fade-in duration-100">
+            {children}
+          </div>
         </main>
       </div>
 

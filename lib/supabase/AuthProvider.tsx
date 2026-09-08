@@ -3,7 +3,6 @@
 import * as React from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "./client";
-import { AuthLoadingOverlay } from "@/components/auth/AuthLoadingOverlay";
 
 interface AuthContextType {
   user: User | null;
@@ -98,10 +97,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={value}>
       {children}
-      <AuthLoadingOverlay
-        isVisible={isAuthActionLoading}
-        message={authLoadingMessage}
-      />
     </AuthContext.Provider>
   );
 };

@@ -149,3 +149,60 @@ export async function signInUser({
     return { success: false, error: parseSupabaseError(err) };
   }
 }
+
+// ─── Password Reset Actions ───────────────────────────────────────────────────
+
+interface PasswordResetActionResult {
+  success: boolean;
+  error?: AppError;
+}
+
+/**
+ * Server Action: Sends a password recovery email to the user with a PKCE redirect
+ * targeting the /auth/callback handler.
+ */
+export async function sendPasswordResetAction(
+  email: string,
+  origin?: string
+): Promise<PasswordResetActionResult> {
+  const supabase = await createClient();
+  const sanitizedEmail = email.trim().toLowerCase();
+  const baseOrigin = origin || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const redirectTo = `${baseOrigin}/auth/callback?next=/auth/reset-password`;
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+      redirectTo,
+    });
+
+    if (error) {
+      return { success: false, error: parseSupabaseError(error) };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: parseSupabaseError(err) };
+  }
+}
+
+/**
+ * Server Action: Updates the user's password using the active authenticated session / recovery context.
+ */
+export async function updateUserPasswordAction(
+  password: string
+): Promise<PasswordResetActionResult> {
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      return { success: false, error: parseSupabaseError(error) };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: parseSupabaseError(err) };
+  }
+}
+

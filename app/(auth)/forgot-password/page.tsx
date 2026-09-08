@@ -33,7 +33,6 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { triggerResetLink, loading, success, error, setError } = usePasswordReset();
-  const { setAuthActionLoading } = useAuth();
 
   const [email, setEmail]           = React.useState("");
   const [touched, setTouched]       = React.useState(false);
@@ -65,24 +64,22 @@ export default function ForgotPasswordPage() {
     setTouched(true);
     if (!isFormValid) return;
 
-    setAuthActionLoading(true, "Processing password recovery request...");
     try {
-      await triggerResetLink(email);
+      await triggerResetLink(email.trim().toLowerCase());
       setResendCountdown(60);
-    } finally {
-      setAuthActionLoading(false);
+    } catch {
+      // Handled by hook
     }
   };
 
   // ── Resend ──────────────────────────────────────────────────────────────────
   const handleResend = async () => {
     if (resendCountdown > 0) return;
-    setAuthActionLoading(true, "Resending password recovery link...");
     try {
-      await triggerResetLink(email);
+      await triggerResetLink(email.trim().toLowerCase());
       setResendCountdown(60);
-    } finally {
-      setAuthActionLoading(false);
+    } catch {
+      // Handled by hook
     }
   };
 
