@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound, ShieldAlert, CheckCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import { KeyRound, CheckCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,7 @@ import { AuthFooter } from "@/components/auth/AuthFooter";
 import { FormError } from "@/components/auth/FormError";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordStrength";
-import { usePasswordReset } from "@/hooks/usePasswordReset";
-import { verifyRecoveryOtp } from "@/lib/auth/password-reset";
+import { verifyRecoveryOtp, updateUserPassword } from "@/lib/auth/password-reset";
 import { createBrowserClient } from "@/lib/supabase";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BRAND_NAME } from "@/constants";
@@ -23,123 +22,54 @@ import { BRAND_NAME } from "@/constants";
 function ResetPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { triggerPasswordUpdate, loading, success, error, setError } = usePasswordReset();
 
+  // Form Fields
+  const [email, setEmail] = React.useState(searchParams.get("email") || "");
+  const [otpCode, setOtpCode] = React.useState(searchParams.get("token") || "");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [touched, setTouched] = React.useState(false);
+
+  // States
+  const [hasActiveSession, setHasActiveSession] = React.useState(false);
   const [checkingSession, setCheckingSession] = React.useState(true);
-  const [sessionError, setSessionError] = React.useState(false);
-  const [sessionErrorMessage, setSessionErrorMessage] = React.useState(
-    "Your password reset link is invalid, expired, or has already been used."
-  );
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = React.useState(false);
 
-  // OTP Fallback state
-  const [showOtpMode, setShowOtpMode] = React.useState(false);
-  const [otpEmail, setOtpEmail] = React.useState(searchParams.get("email") || "");
-  const [otpToken, setOtpToken] = React.useState("");
-  const [otpLoading, setOtpLoading] = React.useState(false);
-  const [otpError, setOtpError] = React.useState("");
-
-  // ─── 1. VERIFY RECOVERY SESSION WITH TRIPLE REDUNDANCY ──────────────────────
+  // ─── Detect Active Recovery Session (from SSR callback or local session) ──
   React.useEffect(() => {
     const supabase = createBrowserClient();
     const code = searchParams.get("code");
-    const errorParam = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
 
-    let isMounted = true;
+    async function checkSession() {
+      try {
+        // A. If code is in URL, try server exchange
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error && data.session) {
+            setHasActiveSession(true);
+            setCheckingSession(false);
+            return;
+          }
+        }
 
-    // Check if URL directly brought an error parameter from Supabase
-    if (errorParam || errorDescription) {
-      if (isMounted) {
-        setSessionErrorMessage(
-          errorDescription?.replace(/\+/g, " ") ||
-            "Your password reset link has expired or is invalid. Please request a new one."
-        );
-        setSessionError(true);
+        // B. Check if active session already exists
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setHasActiveSession(true);
+        }
+      } catch (err) {
+        console.warn("[RESET PASSWORD] Session check exception:", err);
+      } finally {
         setCheckingSession(false);
       }
-      return;
     }
 
-    async function verifyRecoverySession() {
-      try {
-        // ── Step A: Direct PKCE Code Exchange (if arrived with ?code=...) ───────
-        if (code) {
-          console.log("[RESET PASSWORD] Authorization code detected in URL, exchanging...");
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (!exchangeError && data.session) {
-            console.log("[RESET PASSWORD] Code exchanged successfully.");
-            if (isMounted) {
-              setCheckingSession(false);
-              setSessionError(false);
-            }
-            return;
-          } else if (exchangeError) {
-            console.warn("[RESET PASSWORD] Code exchange failed:", exchangeError.message);
-          }
-        }
-
-        // ── Step B: Check Active Session (e.g. from SSR /auth/callback cookies) ──
-        const { data: { session: existingSession } } = await supabase.auth.getSession();
-        if (existingSession) {
-          console.log("[RESET PASSWORD] Active recovery session confirmed.");
-          if (isMounted) {
-            setCheckingSession(false);
-            setSessionError(false);
-          }
-          return;
-        }
-
-        // ── Step C: Listen to Auth State Change (e.g. hash token parsing) ───────
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          console.log("[RESET PASSWORD] Auth state change event:", event);
-          if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
-            if (isMounted) {
-              setCheckingSession(false);
-              setSessionError(false);
-            }
-          }
-        });
-
-        // ── Step D: Allow brief window for hash/async token hydration ──────────
-        const timer = setTimeout(async () => {
-          const { data: { session: retrySession } } = await supabase.auth.getSession();
-          if (isMounted) {
-            if (retrySession) {
-              setCheckingSession(false);
-              setSessionError(false);
-            } else {
-              console.warn("[RESET PASSWORD] No recovery session detected after verification window.");
-              setSessionError(true);
-              setCheckingSession(false);
-            }
-          }
-          subscription.unsubscribe();
-        }, 1200);
-
-        return () => {
-          clearTimeout(timer);
-          subscription.unsubscribe();
-        };
-      } catch (err) {
-        console.error("[RESET PASSWORD] Session verification exception:", err);
-        if (isMounted) {
-          setSessionError(true);
-          setCheckingSession(false);
-        }
-      }
-    }
-
-    verifyRecoverySession();
-
-    return () => {
-      isMounted = false;
-    };
+    checkSession();
   }, [searchParams]);
 
-  // ─── 2. VALIDATION ───────────────────────────────────────────────────────────
+  // Validation
   const getPasswordError = () => {
     if (!touched) return "";
     if (!password) return "Password is required";
@@ -154,182 +84,88 @@ function ResetPasswordPageContent() {
     return "";
   };
 
-  const isFormValid = !getPasswordError() && !getConfirmError() && password.length >= 8;
+  const getOtpError = () => {
+    if (!touched || hasActiveSession) return "";
+    if (!otpCode.trim()) return "6-digit code is required";
+    if (otpCode.trim().length !== 6) return "Code must be exactly 6 digits";
+    return "";
+  };
 
-  // ─── 3. SUBMIT ───────────────────────────────────────────────────────────────
+  const getEmailError = () => {
+    if (!touched || hasActiveSession) return "";
+    if (!email.trim()) return "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Enter a valid email address";
+    return "";
+  };
+
+  const isFormValid =
+    !getPasswordError() &&
+    !getConfirmError() &&
+    (hasActiveSession || (!getOtpError() && !getEmailError())) &&
+    password.length >= 8;
+
+  // ─── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
+    setFormError(null);
 
     if (!isFormValid) return;
 
-    await triggerPasswordUpdate(password);
+    setIsSubmitting(true);
+
+    try {
+      // 1. If not in an active session, verify the 6-digit OTP code first
+      if (!hasActiveSession) {
+        console.log("[RESET PASSWORD] Verifying 6-digit OTP code for:", email);
+        const otpResult = await verifyRecoveryOtp(email.trim(), otpCode.trim());
+        if (!otpResult.success) {
+          setFormError(
+            otpResult.error?.message ||
+              "Invalid or expired 6-digit code. Please check your email and try again."
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // 2. Now with active session, update the password
+      console.log("[RESET PASSWORD] Updating user password...");
+      const updateResult = await updateUserPassword(password);
+      if (!updateResult.success) {
+        setFormError(
+          updateResult.error?.message || "Failed to update password. Please try again."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. Success!
+      setIsSuccess(true);
+      setTimeout(() => {
+        router.replace("/login");
+      }, 2200);
+    } catch (err: any) {
+      console.error("[RESET PASSWORD] Unhandled submission error:", err);
+      setFormError(err?.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Redirect to login after successful password update
-  React.useEffect(() => {
-    if (success) {
-      const t = setTimeout(() => {
-        router.replace("/login");
-      }, 2000);
-      return () => clearTimeout(t);
-    }
-  }, [success, router]);
-
-  const isLoading = loading;
-
-  // ─── 4. RENDER INITIAL VERIFICATION LOADER ───────────────────────────────────
+  // ─── Loading state during initial session check ────────────────────────────
   if (checkingSession) {
     return (
       <AuthCard className="max-w-[460px] text-center p-8">
         <div className="flex flex-col items-center gap-4 py-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <h3 className="text-sm font-extrabold text-foreground">Verifying recovery token...</h3>
-          <p className="text-xs text-text-secondary font-medium">
-            Please wait while we establish your secure session.
-          </p>
+          <h3 className="text-sm font-extrabold text-foreground">Preparing reset form...</h3>
         </div>
       </AuthCard>
     );
   }
 
-  // ─── 5. RENDER INVALID / EXPIRED LINK STATE ───────────────────────────────────
-  if (sessionError) {
-    if (showOtpMode) {
-      return (
-        <AuthCard className="max-w-[460px] p-8">
-          <div className="flex flex-col items-center gap-5 py-2">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
-              <KeyRound className="h-7 w-7" />
-            </div>
-
-            <div className="space-y-1.5 text-center">
-              <h3 className="text-lg font-extrabold text-foreground">Enter 6-Digit Code</h3>
-              <p className="text-xs text-text-secondary font-medium leading-relaxed max-w-xs mx-auto">
-                Check your email for the 6-digit verification code sent with your reset request.
-              </p>
-            </div>
-
-            {otpError && (
-              <div className="w-full">
-                <FormError message={otpError} />
-              </div>
-            )}
-
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!otpEmail.trim() || !otpToken.trim()) {
-                  setOtpError("Please enter your email and 6-digit code.");
-                  return;
-                }
-                setOtpLoading(true);
-                setOtpError("");
-                const res = await verifyRecoveryOtp(otpEmail.trim(), otpToken.trim());
-                if (res.success) {
-                  setSessionError(false);
-                  setCheckingSession(false);
-                } else {
-                  setOtpError(res.error?.message || "Invalid or expired code. Please try again.");
-                }
-                setOtpLoading(false);
-              }}
-              className="w-full space-y-4 pt-2"
-            >
-              <div className="space-y-1.5 text-left">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-                  Account Email
-                </label>
-                <Input
-                  type="email"
-                  placeholder="name@example.com"
-                  value={otpEmail}
-                  onChange={(e) => setOtpEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-1.5 text-left">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
-                  6-Digit Reset Code
-                </label>
-                <Input
-                  type="text"
-                  placeholder="123456"
-                  maxLength={6}
-                  value={otpToken}
-                  onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ""))}
-                  className="text-center font-mono tracking-widest text-lg"
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={otpLoading || otpToken.length < 6}
-                className="w-full justify-center h-11 text-xs font-bold"
-              >
-                {otpLoading ? "Verifying code..." : "Verify Code & Proceed"}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowOtpMode(false)}
-                className="w-full justify-center h-10 text-xs font-bold"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 mr-2" />
-                Back
-              </Button>
-            </form>
-          </div>
-        </AuthCard>
-      );
-    }
-
-    return (
-      <AuthCard className="max-w-[460px] text-center p-8">
-        <div className="flex flex-col items-center gap-5 py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-error/10 text-error ring-1 ring-error/20">
-            <ShieldAlert className="h-7 w-7" />
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-lg font-extrabold text-foreground">Link Expired or Already Used</h3>
-            <p className="text-xs text-text-secondary font-medium leading-relaxed max-w-xs mx-auto">
-              {sessionErrorMessage}
-            </p>
-          </div>
-
-          <div className="w-full space-y-3 pt-2">
-            <Button
-              variant="primary"
-              onClick={() => setShowOtpMode(true)}
-              className="w-full justify-center h-11 text-xs font-bold"
-            >
-              <KeyRound className="h-3.5 w-3.5 mr-2" />
-              Enter 6-Digit Code Instead
-            </Button>
-            <Button variant="outline" className="w-full justify-center h-11 text-xs font-bold" asChild>
-              <Link href="/forgot-password">
-                <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                Request New Reset Link
-              </Link>
-            </Button>
-            <Button variant="ghost" className="w-full justify-center h-10 text-xs font-bold" asChild>
-              <Link href="/login">
-                <ArrowLeft className="h-3.5 w-3.5 mr-2" />
-                Return to Sign In
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </AuthCard>
-    );
-  }
-
-  // ─── 6. RENDER PASSWORD UPDATE PANEL ─────────────────────────────────────────
+  // ─── Reset Password Form ───────────────────────────────────────────────────
   return (
     <AuthCard className="max-w-[460px]">
       <div className="flex justify-center">
@@ -339,12 +175,12 @@ function ResetPasswordPageContent() {
           className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3.5 py-1 text-[11px] font-bold uppercase tracking-widest text-primary select-none"
         >
           <KeyRound className="h-3 w-3" />
-          Secure Reset
+          {hasActiveSession ? "Session Verified" : "Code Verification"}
         </motion.span>
       </div>
 
       <AnimatePresence mode="wait">
-        {success ? (
+        {isSuccess ? (
           <motion.div
             key="success"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -356,9 +192,9 @@ function ResetPasswordPageContent() {
               <CheckCircle className="h-7 w-7" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-extrabold text-foreground">Password updated successfully.</h2>
+              <h2 className="text-xl font-extrabold text-foreground">Password Reset Successful!</h2>
               <p className="text-xs text-text-secondary font-semibold">
-                Returning you to login interface...
+                Your new credentials are saved. Redirecting you to sign in...
               </p>
             </div>
           </motion.div>
@@ -371,12 +207,69 @@ function ResetPasswordPageContent() {
           >
             <AuthHeader
               title="Reset Password"
-              description="Choose a secure new password for your banking account."
+              description={
+                hasActiveSession
+                  ? "Enter and confirm your new password below."
+                  : "Enter the 6-digit code sent to your email to verify and choose a new password."
+              }
             />
 
-            <FormError id="reset-error" message={error || undefined} />
+            {formError && <FormError id="reset-error" message={formError} />}
 
             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+              {/* If no active session, ask for Email & 6-Digit Code */}
+              {!hasActiveSession && (
+                <>
+                  <div className="space-y-1">
+                    <span className="text-label text-text-secondary select-none">Account Email</span>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (formError) setFormError(null);
+                      }}
+                      onBlur={() => setTouched(true)}
+                      error={getEmailError()}
+                      disabled={isSubmitting}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-label text-text-secondary select-none">
+                        6-Digit Security Code
+                      </span>
+                      <Link
+                        href="/forgot-password"
+                        className="text-[11px] font-bold text-primary hover:underline"
+                      >
+                        Resend code?
+                      </Link>
+                    </div>
+                    <Input
+                      id="reset-otp"
+                      type="text"
+                      placeholder="123456"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => {
+                        setOtpCode(e.target.value.replace(/\D/g, ""));
+                        if (formError) setFormError(null);
+                      }}
+                      onBlur={() => setTouched(true)}
+                      error={getOtpError()}
+                      className="text-center font-mono tracking-widest text-lg font-bold"
+                      disabled={isSubmitting}
+                      required
+                    />
+                  </div>
+                </>
+              )}
+
               {/* New Password */}
               <div className="space-y-1">
                 <span className="text-label text-text-secondary select-none">New Password</span>
@@ -387,11 +280,11 @@ function ResetPasswordPageContent() {
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
-                    if (error) setError(null);
+                    if (formError) setFormError(null);
                   }}
                   onBlur={() => setTouched(true)}
                   error={getPasswordError()}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   required
                 />
               </div>
@@ -411,30 +304,47 @@ function ResetPasswordPageContent() {
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
-                    if (error) setError(null);
+                    if (formError) setFormError(null);
                   }}
                   onBlur={() => setTouched(true)}
                   error={getConfirmError()}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                   required
                 />
               </div>
 
               {/* Submit */}
-              <motion.div whileTap={isLoading ? {} : { scale: 0.985 }} transition={{ duration: 0.12 }}>
+              <motion.div
+                whileTap={isSubmitting ? {} : { scale: 0.985 }}
+                transition={{ duration: 0.12 }}
+              >
                 <Button
                   type="submit"
                   variant="primary"
                   className="w-full justify-center h-12 text-sm font-bold mt-2"
-                  isLoading={isLoading}
-                  disabled={isLoading}
+                  isLoading={isSubmitting}
+                  disabled={isSubmitting}
                 >
-                  {isLoading ? "Saving New Password..." : "Update Password"}
+                  {isSubmitting
+                    ? "Updating Password..."
+                    : hasActiveSession
+                    ? "Update Password"
+                    : "Verify Code & Update Password"}
                 </Button>
               </motion.div>
+
+              <div className="text-center pt-2">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center text-xs font-bold text-text-secondary hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="h-3 w-3 mr-1.5" />
+                  Return to Sign In
+                </Link>
+              </div>
             </form>
 
-            <SecurityNotice message="Your session parameters are secured via Supabase SSL protocols." />
+            <SecurityNotice message="Your session and credentials are encrypted with enterprise banking SSL." />
           </motion.div>
         )}
       </AnimatePresence>

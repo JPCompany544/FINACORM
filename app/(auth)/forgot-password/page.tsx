@@ -67,6 +67,7 @@ export default function ForgotPasswordPage() {
     try {
       await triggerResetLink(email.trim().toLowerCase());
       setResendCountdown(60);
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch {
       // Handled by hook
     }
@@ -150,10 +151,17 @@ export default function ForgotPasswordPage() {
 
             {/* Action buttons */}
             <div className="flex flex-col w-full gap-3">
+              <Button variant="primary" asChild className="w-full justify-center h-11 font-bold">
+                <Link href={`/auth/reset-password?email=${encodeURIComponent(email)}`}>
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  Enter 6-Digit Code Now
+                </Link>
+              </Button>
+
               <motion.div whileTap={{ scale: 0.985 }} transition={{ duration: 0.12 }}>
                 <Button
                   type="button"
-                  variant="primary"
+                  variant="outline"
                   className="w-full justify-center h-11 font-bold"
                   onClick={handleResend}
                   isLoading={isLoading}
