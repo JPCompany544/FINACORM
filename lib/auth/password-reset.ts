@@ -41,11 +41,37 @@ export async function sendPasswordResetLink(
   try {
     const supabase = createBrowserClient();
     const redirectTo = origin
-      ? `${origin}/auth/reset-password`
+      ? `${origin}/auth/callback?next=/auth/reset-password`
       : undefined;
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitized, {
       redirectTo,
+    });
+
+    if (error) {
+      return { success: false, error: parseSupabaseError(error) };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: parseSupabaseError(err) };
+  }
+}
+
+/**
+ * Verifies a 6-digit recovery OTP code sent to the user's email.
+ * This establishes an authenticated recovery session without relying on URL magic links or cookies.
+ */
+export async function verifyRecoveryOtp(
+  email: string,
+  token: string
+): Promise<{ success: boolean; error?: AppError }> {
+  try {
+    const supabase = createBrowserClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: token.trim(),
+      type: "recovery",
     });
 
     if (error) {

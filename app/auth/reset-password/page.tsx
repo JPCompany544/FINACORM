@@ -7,7 +7,7 @@ import { KeyRound, ShieldAlert, CheckCircle, ArrowLeft, RefreshCw } from "lucide
 import { motion, AnimatePresence } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
-import { Password } from "@/components/ui/input";
+import { Input, Password } from "@/components/ui/input";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { AuthFooter } from "@/components/auth/AuthFooter";
@@ -15,6 +15,7 @@ import { FormError } from "@/components/auth/FormError";
 import { SecurityNotice } from "@/components/auth/SecurityNotice";
 import { PasswordStrength, getStrengthScore } from "@/components/auth/PasswordStrength";
 import { usePasswordReset } from "@/hooks/usePasswordReset";
+import { verifyRecoveryOtp } from "@/lib/auth/password-reset";
 import { createBrowserClient } from "@/lib/supabase";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { BRAND_NAME } from "@/constants";
@@ -32,6 +33,13 @@ function ResetPasswordPageContent() {
   const [sessionErrorMessage, setSessionErrorMessage] = React.useState(
     "Your password reset link is invalid, expired, or has already been used."
   );
+
+  // OTP Fallback state
+  const [showOtpMode, setShowOtpMode] = React.useState(false);
+  const [otpEmail, setOtpEmail] = React.useState(searchParams.get("email") || "");
+  const [otpToken, setOtpToken] = React.useState("");
+  const [otpLoading, setOtpLoading] = React.useState(false);
+  const [otpError, setOtpError] = React.useState("");
 
   // ─── 1. VERIFY RECOVERY SESSION WITH TRIPLE REDUNDANCY ──────────────────────
   React.useEffect(() => {
@@ -187,6 +195,99 @@ function ResetPasswordPageContent() {
 
   // ─── 5. RENDER INVALID / EXPIRED LINK STATE ───────────────────────────────────
   if (sessionError) {
+    if (showOtpMode) {
+      return (
+        <AuthCard className="max-w-[460px] p-8">
+          <div className="flex flex-col items-center gap-5 py-2">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20">
+              <KeyRound className="h-7 w-7" />
+            </div>
+
+            <div className="space-y-1.5 text-center">
+              <h3 className="text-lg font-extrabold text-foreground">Enter 6-Digit Code</h3>
+              <p className="text-xs text-text-secondary font-medium leading-relaxed max-w-xs mx-auto">
+                Check your email for the 6-digit verification code sent with your reset request.
+              </p>
+            </div>
+
+            {otpError && (
+              <div className="w-full">
+                <FormError message={otpError} />
+              </div>
+            )}
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!otpEmail.trim() || !otpToken.trim()) {
+                  setOtpError("Please enter your email and 6-digit code.");
+                  return;
+                }
+                setOtpLoading(true);
+                setOtpError("");
+                const res = await verifyRecoveryOtp(otpEmail.trim(), otpToken.trim());
+                if (res.success) {
+                  setSessionError(false);
+                  setCheckingSession(false);
+                } else {
+                  setOtpError(res.error?.message || "Invalid or expired code. Please try again.");
+                }
+                setOtpLoading(false);
+              }}
+              className="w-full space-y-4 pt-2"
+            >
+              <div className="space-y-1.5 text-left">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                  Account Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={otpEmail}
+                  onChange={(e) => setOtpEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                  6-Digit Reset Code
+                </label>
+                <Input
+                  type="text"
+                  placeholder="123456"
+                  maxLength={6}
+                  value={otpToken}
+                  onChange={(e) => setOtpToken(e.target.value.replace(/\D/g, ""))}
+                  className="text-center font-mono tracking-widest text-lg"
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={otpLoading || otpToken.length < 6}
+                className="w-full justify-center h-11 text-xs font-bold"
+              >
+                {otpLoading ? "Verifying code..." : "Verify Code & Proceed"}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowOtpMode(false)}
+                className="w-full justify-center h-10 text-xs font-bold"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 mr-2" />
+                Back
+              </Button>
+            </form>
+          </div>
+        </AuthCard>
+      );
+    }
+
     return (
       <AuthCard className="max-w-[460px] text-center p-8">
         <div className="flex flex-col items-center gap-5 py-4">
@@ -195,20 +296,28 @@ function ResetPasswordPageContent() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-lg font-extrabold text-foreground">Invalid or Expired Link</h3>
+            <h3 className="text-lg font-extrabold text-foreground">Link Expired or Already Used</h3>
             <p className="text-xs text-text-secondary font-medium leading-relaxed max-w-xs mx-auto">
               {sessionErrorMessage}
             </p>
           </div>
 
           <div className="w-full space-y-3 pt-2">
-            <Button variant="primary" className="w-full justify-center h-11 text-xs font-bold" asChild>
+            <Button
+              variant="primary"
+              onClick={() => setShowOtpMode(true)}
+              className="w-full justify-center h-11 text-xs font-bold"
+            >
+              <KeyRound className="h-3.5 w-3.5 mr-2" />
+              Enter 6-Digit Code Instead
+            </Button>
+            <Button variant="outline" className="w-full justify-center h-11 text-xs font-bold" asChild>
               <Link href="/forgot-password">
                 <RefreshCw className="h-3.5 w-3.5 mr-2" />
                 Request New Reset Link
               </Link>
             </Button>
-            <Button variant="outline" className="w-full justify-center h-11 text-xs font-bold" asChild>
+            <Button variant="ghost" className="w-full justify-center h-10 text-xs font-bold" asChild>
               <Link href="/login">
                 <ArrowLeft className="h-3.5 w-3.5 mr-2" />
                 Return to Sign In

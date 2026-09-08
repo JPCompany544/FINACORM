@@ -59,7 +59,8 @@ export async function signUpUser({
   const supabase = await createClient();
 
   try {
-    const redirectUrl = origin ? `${origin}/login` : "https://finacormbank.com/login";
+    const baseOrigin = origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.finacormbank.com";
+    const redirectUrl = `${baseOrigin}/auth/callback?next=/dashboard`;
     console.log("[SIGNUP DIAGNOSTIC] Calling supabase.auth.signUp() with emailRedirectTo:", redirectUrl);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -167,8 +168,8 @@ export async function sendPasswordResetAction(
 ): Promise<PasswordResetActionResult> {
   const supabase = await createClient();
   const sanitizedEmail = email.trim().toLowerCase();
-  const baseOrigin = origin || process.env.NEXT_PUBLIC_SITE_URL || "https://finacormbank.com";
-  const redirectTo = `${baseOrigin}/auth/reset-password`;
+  const baseOrigin = origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.finacormbank.com";
+  const redirectTo = `${baseOrigin}/auth/callback?next=/auth/reset-password`;
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
