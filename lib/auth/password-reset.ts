@@ -41,7 +41,7 @@ export async function sendPasswordResetLink(
   try {
     const supabase = createBrowserClient();
     const redirectTo = origin
-      ? `${origin}/auth/callback?next=/auth/reset-password`
+      ? `${origin}/auth/reset-password`
       : undefined;
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitized, {

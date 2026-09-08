@@ -49,6 +49,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   React.useEffect(() => {
+    // 1. Immediate detection of recovery hash or recovery code landing on homepage / other pages
+    if (typeof window !== "undefined") {
+      const { pathname, search, hash } = window.location;
+      if (!pathname.includes("/auth/reset-password")) {
+        // Case A: Supabase redirected to Site URL with recovery tokens in hash
+        if (hash && (hash.includes("type=recovery") || hash.includes("access_token="))) {
+          window.location.replace("/auth/reset-password" + hash);
+          return;
+        }
+        // Case B: Supabase redirected to homepage with PKCE code
+        const params = new URLSearchParams(search);
+        if (pathname === "/" && params.has("code")) {
+          window.location.replace(`/auth/reset-password${search}`);
+          return;
+        }
+      }
+    }
+
     // Fetch session on load
     supabase.auth.getSession().then(({ data: { session: activeSession } }) => {
       setSession(activeSession);
@@ -59,10 +77,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state change listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((event, currentSession) => {
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
+
+      if (event === "PASSWORD_RECOVERY") {
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/reset-password")) {
+          window.location.replace("/auth/reset-password");
+        }
+      }
     });
 
     return () => {

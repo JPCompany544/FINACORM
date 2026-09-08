@@ -167,8 +167,8 @@ export async function sendPasswordResetAction(
 ): Promise<PasswordResetActionResult> {
   const supabase = await createClient();
   const sanitizedEmail = email.trim().toLowerCase();
-  const baseOrigin = origin || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const redirectTo = `${baseOrigin}/auth/callback?next=/auth/reset-password`;
+  const baseOrigin = origin || process.env.NEXT_PUBLIC_SITE_URL || "https://finacormbank.com";
+  const redirectTo = `${baseOrigin}/auth/reset-password`;
 
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
