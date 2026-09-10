@@ -5,13 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Compass, LogOut, ChevronLeft, ChevronRight, Menu, X, ArrowUpRight } from "lucide-react";
-import { useSidebar } from "./context";
-import { useProfile } from "./context";
+import { useSidebar, useProfile } from "./context";
 import { useToast } from "./Toast";
 import { BANKING_NAV_ITEMS } from "@/constants/navigation";
 import { cn } from "@/lib/utils";
 import { BRAND_NAME } from "@/constants";
 import { useLogout } from "@/hooks/useLogout";
+import { useAuth } from "@/lib/supabase";
 import Image from "next/image";
 
 export const Sidebar: React.FC<{ className?: string; isMobile?: boolean }> = ({
@@ -22,12 +22,18 @@ export const Sidebar: React.FC<{ className?: string; isMobile?: boolean }> = ({
   const router = useRouter();
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { handleLogout, loading } = useLogout();
+  const { user } = useAuth();
   const profile = useProfile();
 
-  const initials = profile
-    ? `${profile.first_name[0] ?? ""}${profile.last_name[0] ?? ""}`.toUpperCase()
-    : "N";
-  const displayName = profile ? `${profile.first_name} ${profile.last_name}` : "Northstar User";
+  const firstName = profile?.first_name || (user?.user_metadata?.first_name as string) || "";
+  const lastName = profile?.last_name || (user?.user_metadata?.last_name as string) || "";
+  const displayName = (firstName || lastName)
+    ? `${firstName} ${lastName}`.trim()
+    : (user?.email?.split("@")[0] || "Northstar User");
+
+  const initials = (firstName && lastName)
+    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
+    : (displayName[0] || "N").toUpperCase();
 
   const onLogoutClick = async (e: React.MouseEvent) => {
     e.preventDefault();

@@ -24,6 +24,7 @@ import { useProfile } from "./context";
 import { useToast } from "./Toast";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/hooks/useLogout";
+import { useAuth } from "@/lib/supabase";
 import Image from "next/image";
 import { loadTawkSupport } from "@/lib/tawk";
 
@@ -68,12 +69,20 @@ export const TopNavigation: React.FC = () => {
   const { toggleNotifications, unreadCount } = useNotifications();
   const { success } = useToast();
   const { handleLogout, loading } = useLogout();
+  const { user } = useAuth();
   const profile = useProfile();
 
-  const initials = profile
-    ? `${profile.first_name[0] ?? ""}${profile.last_name[0] ?? ""}`.toUpperCase()
-    : "N";
-  const displayName = profile ? `${profile.first_name} ${profile.last_name}` : "Northstar User";
+  const firstName = profile?.first_name || (user?.user_metadata?.first_name as string) || "";
+  const lastName = profile?.last_name || (user?.user_metadata?.last_name as string) || "";
+  const displayName = (firstName || lastName)
+    ? `${firstName} ${lastName}`.trim()
+    : (user?.email?.split("@")[0] || "Northstar User");
+
+  const initials = (firstName && lastName)
+    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
+    : (displayName[0] || "N").toUpperCase();
+
+  const userEmail = profile?.email || user?.email || "";
 
   const [profileDropdownOpen, setProfileDropdownOpen] = React.useState(false);
   const [quickCreateOpen, setQuickCreateOpen] = React.useState(false);
@@ -272,10 +281,12 @@ export const TopNavigation: React.FC = () => {
                 className="absolute right-0 mt-2 w-48 rounded-custom-xl border border-border bg-surface shadow-modal overflow-hidden p-1.5 z-30"
               >
                 <div className="px-3.5 py-2 border-b border-border/30 mb-1 select-none">
-                  <div className="text-xs font-black text-foreground">{displayName}</div>
-                  <div className="text-[10px] font-bold text-text-secondary mt-0.5">
-                    nnamdi.o@northstar.bank
-                  </div>
+                  <div className="text-xs font-black text-foreground truncate">{displayName}</div>
+                  {userEmail && (
+                    <div className="text-[10px] font-bold text-text-secondary mt-0.5 truncate">
+                      {userEmail}
+                    </div>
+                  )}
                 </div>
                 {[
                   { label: "My Profile", icon: User, href: "/dashboard/settings" },

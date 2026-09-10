@@ -42,11 +42,13 @@ interface AppShellContextType {
   profileData: {
     first_name: string;
     last_name: string;
+    email: string;
     avatar_url: string | null;
   } | null;
   setProfileData: React.Dispatch<React.SetStateAction<{
     first_name: string;
     last_name: string;
+    email: string;
     avatar_url: string | null;
   } | null>>;
 }
@@ -114,6 +116,7 @@ export const AppShellProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [profileData, setProfileData] = React.useState<{
     first_name: string;
     last_name: string;
+    email: string;
     avatar_url: string | null;
   } | null>(null);
 
@@ -132,7 +135,15 @@ export const AppShellProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           .eq("id", user.id)
           .single();
 
-        if (error || !coreData) return;
+        if (error || !coreData) {
+          setProfileData({
+            first_name: (user.user_metadata?.first_name as string) || "",
+            last_name: (user.user_metadata?.last_name as string) || "",
+            email: user.email ?? "",
+            avatar_url: null,
+          });
+          return;
+        }
 
         // avatar_url — fetched separately, safe to fail if column not yet added
         let avatar_url: string | null = null;
@@ -162,7 +173,7 @@ export const AppShellProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // Column may not exist yet — non-fatal
         }
 
-        setProfileData({ ...coreData, avatar_url });
+        setProfileData({ ...coreData, email: user.email ?? "", avatar_url });
       } catch {
         // Fail silently — shell still works without profile data
       }
